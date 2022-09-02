@@ -1,0 +1,11 @@
+name = "money-balancer"
+main = "src/index.ts"
+compatibility_date = "2022-09-02"
+
+kv_namespaces = [
+  { binding = "BALANCES", id = "c902819275aa4b63997bacfff04846cd", preview_id = "772ecc048a704898a9bc8d1610ce224b" },
+  { binding = "USERS", id = "ee278954e0194bc0a16c26ed7e57b1bf", preview_id = "c79443e5f54c455d855fbcf4500f90eb" }
+]
+
+[vars]
+  ENV_JWT_SECRET = "secret"
