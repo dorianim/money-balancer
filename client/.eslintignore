@@ -3,5 +3,4 @@
 **/package-lock.json
 **/.eslintrc.js
 **/build
-/src/data/api.ts
-/src/data/configuration.ts
+**/service-worker.ts
