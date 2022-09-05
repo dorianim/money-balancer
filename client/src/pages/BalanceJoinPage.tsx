@@ -9,16 +9,8 @@ export default function BalanceJoinPage() {
   const { balanceId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    token,
-    setTitle,
-    setToken,
-    user,
-    setUser,
-    error,
-    setError,
-    setLoginRedirectUrl,
-  } = useContext(Context);
+  const { token, setTitle, error, setError, setLoginRedirectUrl } =
+    useContext(Context);
 
   const [loading, setLoading] = useState(false);
 

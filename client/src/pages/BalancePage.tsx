@@ -21,7 +21,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Context } from '../data/Context';
 import { Balance } from '../data/Types';
@@ -34,16 +34,8 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    token,
-    setTitle,
-    setToken,
-    user,
-    setUser,
-    error,
-    setError,
-    setLoginRedirectUrl,
-  } = useContext(Context);
+  const { token, setTitle, user, setError, setLoginRedirectUrl } =
+    useContext(Context);
 
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -253,7 +245,7 @@ export default function LoginPage() {
                 id='consumers-checkbox'
                 name='consumers'
                 value={selectedConsumers}
-                onChange={(e, _) => onConsumersChange(e)}
+                onChange={e => onConsumersChange(e)}
                 input={<OutlinedInput id='select-multiple-chip' label='Chip' />}
                 renderValue={selected => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>

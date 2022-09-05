@@ -6,6 +6,7 @@ import ContextWrapper from './ContextWrapper';
 import PageTemplate from './PageTemplate';
 import BalancePage from '../pages/BalancePage';
 import BalanceJoinPage from '../pages/BalanceJoinPage';
+import RegistrationPage from '../pages/RegistrationPage';
 
 /**
  *
@@ -21,6 +22,10 @@ export default function Routing() {
             <Routes>
               <Route path='/' element={<BalanceListPage />} />
               <Route path='/login' element={<LoginPage />}></Route>
+              <Route
+                path='/registration'
+                element={<RegistrationPage />}
+              ></Route>
               <Route
                 path='/balance/:balanceId'
                 element={<BalancePage />}

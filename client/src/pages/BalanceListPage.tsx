@@ -1,6 +1,5 @@
-import { Add, Close } from '@mui/icons-material';
+import { Add } from '@mui/icons-material';
 import {
-  Alert,
   Button,
   CircularProgress,
   Dialog,
@@ -9,13 +8,12 @@ import {
   DialogContentText,
   DialogTitle,
   Grid,
-  IconButton,
   Modal,
   TextField,
   Typography,
 } from '@mui/material';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useRoutes } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import CollapsableAlert from '../components/CollapsableAlert';
 
 import { Context } from '../data/Context';
@@ -25,16 +23,8 @@ import { User } from '../data/Types';
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    token,
-    setTitle,
-    setToken,
-    user,
-    setUser,
-    error,
-    setError,
-    setLoginRedirectUrl,
-  } = useContext(Context);
+  const { token, setTitle, user, setUser, setError, setLoginRedirectUrl, api } =
+    useContext(Context);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -60,7 +50,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (r.status !== 200) {
-      setToken('');
+      api.logout();
       return;
     }
 

@@ -1,6 +1,6 @@
-import { AlertColor } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
-import { Context } from '../data/Context';
+import { useEffect, useState } from 'react';
+import { Context, ErrorData } from '../data/Context';
+import { MoneyBalancerApi } from '../data/MoneyBalancerApi';
 import { User } from '../data/Types';
 
 interface StoredContext {
@@ -37,11 +37,7 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
   const [title, setTitle] = useState('Money Balancer');
   const [token, setToken] = useState(storedContext.token);
   const [user, setUser] = useState(storedContext.user);
-  const [error, setError] = useState<{
-    open: boolean;
-    severity: AlertColor;
-    message: string;
-  }>({
+  const [error, setError] = useState<ErrorData>({
     open: false,
     severity: 'error',
     message: 'test',
@@ -49,6 +45,7 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
   const [loginRedirectUrl, setLoginRedirectUrl] = useState(
     storedContext.loginRedirectUrl,
   );
+  const api = new MoneyBalancerApi({ token, setToken, setError });
 
   useEffect(() => {
     localStorage.setItem(
@@ -67,13 +64,13 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
         title,
         setTitle,
         token,
-        setToken,
         user,
         setUser,
         error,
         setError,
         loginRedirectUrl,
         setLoginRedirectUrl,
+        api,
       }}
     >
       {children}

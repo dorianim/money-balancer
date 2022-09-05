@@ -1,23 +1,19 @@
 import { AlertColor } from '@mui/material';
 import { createContext } from 'react';
+import { MoneyBalancerApi } from './MoneyBalancerApi';
 import { User } from './Types';
 
-interface ErrorData {
+export interface ErrorData {
   open: boolean;
   severity: AlertColor;
   message: string;
 }
 
-/**
- * Creates a Context that is accessible to all nodes wrapped in the context provider
- * @return {React.Context}
- */
-export const Context = createContext<{
+export interface ContextType {
   title: string;
   setTitle: (title: string) => void;
 
   token: string;
-  setToken: (token: string) => void;
 
   user: User | undefined;
   setUser: (user: User) => void;
@@ -27,16 +23,21 @@ export const Context = createContext<{
 
   loginRedirectUrl: string;
   setLoginRedirectUrl: (url: string) => void;
-}>({
+
+  api: MoneyBalancerApi;
+}
+
+/**
+ * Creates a Context that is accessible to all nodes wrapped in the context provider
+ * @return {React.Context}
+ */
+export const Context = createContext<ContextType>({
   title: '',
   setTitle: () => {
     return;
   },
 
   token: '',
-  setToken: () => {
-    return;
-  },
 
   user: undefined,
   setUser: () => {
@@ -52,4 +53,14 @@ export const Context = createContext<{
   setLoginRedirectUrl: () => {
     return;
   },
+
+  api: new MoneyBalancerApi({
+    token: '',
+    setToken: () => {
+      return;
+    },
+    setError: () => {
+      return;
+    },
+  }),
 });
