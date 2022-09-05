@@ -1,0 +1,7 @@
+**/node_modules
+**/dist
+**/package-lock.json
+**/.eslintrc.js
+**/build
+/src/data/api.ts
+/src/data/configuration.ts
