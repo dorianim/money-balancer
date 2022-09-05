@@ -1,0 +1,15 @@
+kind: pipeline
+name: default
+steps:
+- name: build
+  image: node:16.16.0-alpine3.15
+  commands:
+    - npm i
+    - npm run build
+
+- name: publish
+  image: itsblue.dev/plugins/codeberg-pages-deploy
+  settings:
+    folder: build
+    ssh_key:
+        from_secret: gitea-ssh-key
