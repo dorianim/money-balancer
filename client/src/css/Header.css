@@ -1,0 +1,10 @@
+.header-container {
+    gap: 40px;
+    flex-direction: row;
+  }
+  
+  .header-icon {
+    height: 50px;
+    display: block;
+  }
+  
