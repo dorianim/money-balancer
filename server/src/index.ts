@@ -25,8 +25,24 @@ const balanceRouter = Router({ base: '/balance' })
 router.all('/balance/*', requireAuthentication, balanceRouter.handle)
 registerBalanceRoutes(balanceRouter)
 
-router.all("*", () => json({message: "endpoint not found"}, 404))
+router.all("*", (request: Request) => {
+	if(request.method === "OPTIONS") {
+		return new Response();
+	}
+
+	return json({message: "endpoint not found"}, 404)
+})
 
 export default {
-	fetch: router.handle
-}
+	fetch: (request: Request, ...extra: any) => router
+						  .handle(request, ...extra)
+						  .then(response => {
+							// can modify response here before final return, e.g. CORS headers
+							response.headers.set("Access-Control-Allow-Origin", "*")
+							response.headers.set("Access-Control-Allow-Headers", "*")
+							return response
+						  })
+						  .catch(err => {
+							// and do something with the errors here, like logging, error status, etc
+						  })
+  }

@@ -89,6 +89,11 @@ async function createPurchase(request: AuthenticatedRequest, env: Env) {
     return json({message: "missing parameters"}, 400);
   }
 
+  // make sure, amount is a full, positive number
+  if(purchaseRequest.amount <= 0 || !Number.isInteger(purchaseRequest.amount)) {
+    return json({message: "amount has to be a positive integer"}, 400);
+  }
+
   const balanceId = decodeURIComponent(request.params?.balanceId || '');
   // load balance
   const rawBalanceData = await env.BALANCES.get(balanceId);

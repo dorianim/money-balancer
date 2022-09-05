@@ -59,7 +59,7 @@ async function createUser(request: Request, env: Env) {
     const hashSalt = uuidv4();
     const hashedPassword = await sha256(userData.password + hashSalt) + ":" + hashSalt;
   
-    env.USERS.put(userId, JSON.stringify({id:userId, username: userData.username, nickname: userData.nickname, password: hashedPassword, balances: []}));
+    env.USERS.put(userId, JSON.stringify({id:userId, username: userData.username, nickname: userData.nickname, password: hashedPassword, balances: {}}));
   
     return json({username: userData.username, nickname: userData.nickname, id: userId})
   }
@@ -72,7 +72,7 @@ async function createUser(request: Request, env: Env) {
     const userRequest: UserCreationRequest = await request.json();
 
     if(!userRequest.username || !userRequest.password) {
-      return json({message: "username, fullName or password missing!"}, 400);
+      return json({message: "username or password missing!"}, 400);
     }
 
     const userId = await sha256(userRequest.username);

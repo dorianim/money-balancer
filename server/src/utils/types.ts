@@ -1,5 +1,5 @@
 import { Request } from 'itty-router'
-export type MethodType = 'GET' | 'POST' | 'PUPPY';
+export type MethodType = 'GET' | 'POST' | 'PUPPY' | 'OPTIONS';
 
 export interface Env {
 	BALANCES: KVNamespace;

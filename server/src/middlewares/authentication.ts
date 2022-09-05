@@ -8,7 +8,10 @@ import { JWSInvalid } from 'jose/dist/types/util/errors';
 const encoder = new TextEncoder(); 
 
 export async function requireAuthentication(request: AuthenticatedRequest, env: Env) {
-    console.log(request.headers.get("Authorization"))
+    if(request.method === "OPTIONS") {
+        return new Response();
+    }
+
     const authHeader = request.headers.get("Authorization") || ''
     if(!authHeader.startsWith("Bearer ")) {
         return json({message: "Invalid authorization header"}, 400);
