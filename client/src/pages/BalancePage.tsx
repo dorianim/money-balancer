@@ -5,7 +5,6 @@ import {
   CardContent,
   Checkbox,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -16,10 +15,10 @@ import {
   InputLabel,
   ListItemText,
   MenuItem,
-  Modal,
   OutlinedInput,
   Select,
   SelectChangeEvent,
+  Skeleton,
   TextField,
   Typography,
 } from '@mui/material';
@@ -28,9 +27,10 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Context } from '../data/Context';
 import { Balance, UserBalances } from '../data/Types';
 import CollapsableAlert from '../components/CollapsableAlert';
-import { Add } from '@mui/icons-material';
 import { FieldValues, useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
+import BalancesWithOtherUsers from '../components/BalancesWithOtherUsers';
+import PurchaseHistory from '../components/PurchaseHistory';
 
 export default function LoginPage() {
   const { balanceId } = useParams();
@@ -132,111 +132,90 @@ export default function LoginPage() {
   return (
     <>
       <Typography variant='h5' sx={{ paddingBottom: 2 }}>
-        Balance {balanceData?.name}, owner:{' '}
-        {balanceData?.users[balanceData.owner].nickname}
+        Your balances
       </Typography>
 
-      <Grid container spacing={2}>
-        {Object.keys(balancesWithOtherUsers).map(otherUserId => (
-          <Grid key={`current-balance-with-${otherUserId}`} xs='auto' item>
-            <Chip
-              label={
-                balancesWithOtherUsers[otherUserId] === 0
-                  ? `You are even with ${balanceData?.users[otherUserId].nickname}`
-                  : balancesWithOtherUsers[otherUserId] < 0
-                  ? `You owe ${balanceData?.users[otherUserId].nickname} ${
-                      balancesWithOtherUsers[otherUserId] / 100
-                    }€`
-                  : `${balanceData?.users[otherUserId].nickname} ows you ${
-                      balancesWithOtherUsers[otherUserId] / 100
-                    }€`
-              }
-              color={
-                balancesWithOtherUsers[otherUserId] < 0 ? 'error' : 'success'
-              }
-            />
-          </Grid>
-        ))}
-      </Grid>
+      {!loading ? (
+        <BalancesWithOtherUsers
+          users={balanceData?.users ?? {}}
+          balancesWithOtherUsers={balancesWithOtherUsers}
+        ></BalancesWithOtherUsers>
+      ) : (
+        <Grid container spacing={2}>
+          {new Array(2).fill(0).map((_, i) => (
+            <Grid item xs='auto' key={`current-balance-skeleton-${i}`}>
+              <Skeleton
+                variant='rounded'
+                width={120}
+                height={32}
+                sx={{ borderRadius: '16px' }}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       <Typography variant='h5' sx={{ paddingBottom: 2, paddingTop: 2 }}>
-        Purchases
+        Purchase history
       </Typography>
 
-      <Grid spacing={2} container>
-        <Grid item xs={12}>
-          <Button
-            variant='outlined'
-            onClick={() => setDialogOpen(true)}
-            fullWidth
-          >
-            <Add sx={{ marginRight: 1 }}></Add>
-            New purchase
-          </Button>
-        </Grid>
-
-        {balanceData?.purchases.map(purchase => (
-          <Grid
-            item
-            xs={12}
-            key={`purchase-${purchase.timestamp}-${purchase.amount}-${
-              purchase.purchaser
-            }-${purchase.consumers.join('-')}`}
-          >
-            <Card>
-              <CardContent>
-                <Grid container spacing={2} alignItems='center'>
-                  <Grid item>
-                    <Chip
-                      label={(purchase.amount / 100).toFixed(2) + '€'}
-                      color={
-                        purchase.purchaser === user?.id
-                          ? 'success'
-                          : purchase.consumers.indexOf(user?.id ?? '') >= 0
-                          ? 'error'
-                          : 'info'
-                      }
-                    ></Chip>
-                  </Grid>
-                  <Grid item>
-                    <Typography variant='h6'>{purchase.description}</Typography>
-                  </Grid>
-
-                  <Grid item>
-                    <Typography variant='body2'>
-                      {new Date(purchase.timestamp).toLocaleString()}
-                    </Typography>
-                  </Grid>
-
-                  <Grid item>
-                    <Typography variant='body2'>
-                      Purchased by{' '}
-                      <b>
-                        {purchase.purchaser === user?.id
-                          ? 'you'
-                          : balanceData?.users[purchase.purchaser].nickname}
-                      </b>{' '}
-                      for{' '}
-                      {purchase.consumers
-                        .map(consumerId =>
-                          consumerId === user?.id
-                            ? 'yourself'
-                            : balanceData?.users[consumerId].nickname,
-                        )
-                        .reduce(
-                          (text, value, i, array) =>
-                            text +
-                            (i < array.length - 1 ? ', ' : ' and ') +
-                            value,
-                        )}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
+      {!loading ? (
+        <PurchaseHistory
+          purchases={balanceData?.purchases ?? []}
+          users={balanceData?.users ?? {}}
+          currentUserId={user?.id ?? ''}
+          onCreateNewPurchase={() => setDialogOpen(true)}
+        ></PurchaseHistory>
+      ) : (
+        <Grid spacing={2} container>
+          <Grid item xs={12}>
+            <Skeleton variant='rectangular' height={36.5} width='100%' />
           </Grid>
-        ))}
-      </Grid>
+
+          {new Array(10).fill(0).map((_, i) => (
+            <Grid item xs={12} key={i}>
+              <Card>
+                <CardContent>
+                  <Grid container spacing={2} alignItems='center'>
+                    <Grid item>
+                      <Skeleton
+                        variant='rounded'
+                        width={60}
+                        height={32}
+                        sx={{ borderRadius: '16px' }}
+                      />
+                    </Grid>
+
+                    <Grid item>
+                      <Skeleton
+                        variant='text'
+                        sx={{ fontSize: '1.25rem' }}
+                        width={80}
+                      />
+                    </Grid>
+
+                    <Grid item>
+                      <Skeleton
+                        variant='text'
+                        sx={{ fontSize: '0.875rem' }}
+                        width={140}
+                      />
+                    </Grid>
+
+                    <Grid item>
+                      <Skeleton
+                        variant='text'
+                        sx={{ fontSize: '1rem' }}
+                        width={200}
+                      />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
         <DialogTitle>New balance</DialogTitle>
@@ -331,13 +310,6 @@ export default function LoginPage() {
           </DialogActions>
         </form>
       </Dialog>
-
-      <Modal
-        open={loading && !dialogOpen}
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      >
-        <CircularProgress></CircularProgress>
-      </Modal>
     </>
   );
 }

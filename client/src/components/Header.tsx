@@ -21,14 +21,6 @@ export default function Header() {
   const { title } = useContext(Context);
   const location = useLocation();
 
-  const logoContainerStyle = {
-    textDecoration: 'none',
-    color: 'inherit',
-    margin: '0 0 0 0',
-    width: 'fit-content',
-    padding: '0 0 0 0 !important',
-  };
-
   return (
     <AppBar position='sticky'>
       <Container maxWidth={'md'}>

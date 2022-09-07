@@ -25,7 +25,7 @@ export interface Purchase {
   description: string;
 }
 
-interface Users {
+export interface Users {
   [id: string]: PublicUser;
 }
 
