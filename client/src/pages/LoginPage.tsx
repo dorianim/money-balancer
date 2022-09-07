@@ -88,6 +88,7 @@ export default function LoginPage() {
 
           <Grid item xs={12}>
             <Button
+              disabled={loading}
               variant='outlined'
               onClick={() => navigate('/registration')}
               fullWidth
