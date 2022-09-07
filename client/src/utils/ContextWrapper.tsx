@@ -45,6 +45,7 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
   const [loginRedirectUrl, setLoginRedirectUrl] = useState(
     storedContext.loginRedirectUrl,
   );
+  const [goBackToUrl, setGoBackToUrl] = useState<string | undefined>(undefined);
   const api = new MoneyBalancerApi({ token, setToken, setError });
 
   useEffect(() => {
@@ -71,6 +72,8 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
         loginRedirectUrl,
         setLoginRedirectUrl,
         api,
+        goBackToUrl,
+        setGoBackToUrl,
       }}
     >
       {children}

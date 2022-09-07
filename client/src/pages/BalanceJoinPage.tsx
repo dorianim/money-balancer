@@ -8,7 +8,8 @@ export default function BalanceJoinPage() {
   const { balanceId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { api, setTitle, setLoginRedirectUrl } = useContext(Context);
+  const { api, setTitle, setGoBackToUrl, setLoginRedirectUrl } =
+    useContext(Context);
 
   const [loading, setLoading] = useState(false);
 
@@ -19,6 +20,7 @@ export default function BalanceJoinPage() {
       return;
     }
     setTitle('Join balance');
+    setGoBackToUrl('/');
   });
 
   const joinBalance = async () => {

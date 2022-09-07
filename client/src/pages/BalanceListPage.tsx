@@ -28,20 +28,21 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const { api, setTitle, user, setUser, setLoginRedirectUrl } =
+  const { api, setTitle, setGoBackToUrl, user, setUser, setLoginRedirectUrl } =
     useContext(Context);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setTitle('My balances');
     if (!api.loggedIn()) {
       setLoginRedirectUrl(location.pathname);
       navigate('/login');
       return;
     }
 
+    setTitle('My balances');
+    setGoBackToUrl(undefined);
     loadUserData();
   }, []);
 

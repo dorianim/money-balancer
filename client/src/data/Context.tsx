@@ -24,6 +24,9 @@ export interface ContextType {
   loginRedirectUrl: string;
   setLoginRedirectUrl: (url: string) => void;
 
+  goBackToUrl: string | undefined;
+  setGoBackToUrl: (goBackToUrl: string | undefined) => void;
+
   api: MoneyBalancerApi;
 }
 
@@ -63,4 +66,9 @@ export const Context = createContext<ContextType>({
       return;
     },
   }),
+
+  goBackToUrl: undefined,
+  setGoBackToUrl: () => {
+    return;
+  },
 });

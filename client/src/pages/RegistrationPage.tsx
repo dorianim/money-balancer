@@ -1,4 +1,4 @@
-import { Button, Grid, TextField } from '@mui/material';
+import { Grid, TextField } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { useContext, useEffect, useState } from 'react';
 import { Context } from '../data/Context';
@@ -7,7 +7,8 @@ import CollapsableAlert from '../components/CollapsableAlert';
 import { FieldValues, useForm } from 'react-hook-form';
 
 export default function RegistrationPage() {
-  const { setTitle, setUser, api, loginRedirectUrl } = useContext(Context);
+  const { setTitle, setGoBackToUrl, setUser, api, loginRedirectUrl } =
+    useContext(Context);
   const navigate = useNavigate();
   const {
     register,
@@ -17,11 +18,14 @@ export default function RegistrationPage() {
 
   const [loading, setLoading] = useState(false);
 
-  if (api.loggedIn()) {
-    navigate('/');
-  }
+  useEffect(() => {
+    if (api.loggedIn()) {
+      navigate('/');
+    }
 
-  useEffect(() => setTitle('Register'), [setTitle]);
+    setTitle('Register');
+    setGoBackToUrl('/login');
+  }, []);
 
   const onSubmit = async (data: FieldValues) => {
     setLoading(true);
@@ -53,7 +57,7 @@ export default function RegistrationPage() {
 
     setLoading(false);
     setUser(userData);
-    navigate(loginRedirectUrl);
+    navigate(loginRedirectUrl, { replace: true });
   };
 
   return (
@@ -105,16 +109,6 @@ export default function RegistrationPage() {
             >
               Register
             </LoadingButton>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Button
-              variant='outlined'
-              onClick={() => navigate('/login')}
-              fullWidth
-            >
-              Login
-            </Button>
           </Grid>
         </Grid>
       </form>

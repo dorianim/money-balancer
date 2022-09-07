@@ -2,13 +2,6 @@ import { CssBaseline } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
-  components: {
-    MuiToggleButton: {
-      defaultProps: {
-        disableRipple: true,
-      },
-    },
-  },
   palette: {
     mode: 'dark',
   },

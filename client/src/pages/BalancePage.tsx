@@ -42,7 +42,8 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const { setTitle, user, setLoginRedirectUrl, api } = useContext(Context);
+  const { setTitle, setGoBackToUrl, user, setLoginRedirectUrl, api } =
+    useContext(Context);
 
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -53,12 +54,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     setTitle('');
+
     if (!api.loggedIn()) {
       setLoginRedirectUrl(location.pathname);
       navigate('/login');
       return;
     }
 
+    setGoBackToUrl('/');
     loadBalanceData();
   }, [balanceId]);
 
