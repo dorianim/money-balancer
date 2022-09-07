@@ -1,14 +1,16 @@
+import { ArrowBack } from '@mui/icons-material';
 import {
   AppBar,
   Toolbar,
   Container,
   Typography,
   Skeleton,
+  IconButton,
+  Collapse,
 } from '@mui/material';
 import { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
-import '../css/Header.css';
 import { Context } from '../data/Context';
 
 /**
@@ -17,6 +19,7 @@ import { Context } from '../data/Context';
  */
 export default function Header() {
   const { title } = useContext(Context);
+  const location = useLocation();
 
   const logoContainerStyle = {
     textDecoration: 'none',
@@ -28,24 +31,19 @@ export default function Header() {
 
   return (
     <AppBar position='sticky'>
-      <Container maxWidth={'md'} className='header-container'>
-        <Toolbar className='header-container'>
-          <Container
-            sx={{
-              ...logoContainerStyle,
-              display: { xs: 'none', md: 'none' },
-            }}
+      <Container maxWidth={'md'}>
+        <Toolbar style={{ padding: 0 }}>
+          <Collapse
+            in={location.pathname !== '/'}
+            orientation='horizontal'
+            sx={{ height: 'auto' }}
           >
-            <Link to='/'></Link>
-          </Container>
-          <Container
-            sx={{
-              ...logoContainerStyle,
-              display: { xs: 'none', md: 'none' },
-            }}
-          >
-            <Link to='/'></Link>
-          </Container>
+            <Link to='/'>
+              <IconButton sx={{ marginRight: 1 }}>
+                <ArrowBack></ArrowBack>
+              </IconButton>
+            </Link>
+          </Collapse>
           <Typography variant='h5'>{title}</Typography>
           {title === '' && <Skeleton height={20} width={200}></Skeleton>}
         </Toolbar>

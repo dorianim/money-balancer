@@ -1,4 +1,5 @@
 import { ErrorData } from './Context';
+import { Balance, User } from './Types';
 
 export const URL = 'https://money-balancer.itsblue.workers.dev';
 
@@ -14,7 +15,7 @@ export class MoneyBalancerApi {
 
   constructor(context: ReducedContextType) {
     this._context = context;
-    this._token = '';
+    this._token = context.token;
   }
 
   private async _authorizedFetch(path: string, init?: RequestInit | undefined) {
@@ -40,15 +41,23 @@ export class MoneyBalancerApi {
     }
   }
 
-  private async _error(r?: Response) {
-    if (!r) return undefined;
+  private async _error(r: Response, ...acceptedStatusCodes: number[]) {
+    if (acceptedStatusCodes.indexOf(r.status) >= 0) {
+      this._resetError();
+      return false;
+    }
+
     const data = await r.json();
     this._context.setError({
       message: data.message,
       severity: 'error',
       open: true,
     });
-    return undefined;
+    return true;
+  }
+
+  private _resetError() {
+    this._context.setError({ message: '', severity: 'info', open: false });
   }
 
   private _setToken(token: string) {
@@ -73,9 +82,7 @@ export class MoneyBalancerApi {
       }),
     });
 
-    if (!r || r.status !== 200) {
-      this._setToken('');
-      await this._error(r);
+    if (!r || (await this._error(r, 200))) {
       return false;
     }
 
@@ -84,7 +91,11 @@ export class MoneyBalancerApi {
     return true;
   }
 
-  async createUser(username: string, nickname: string, password: string) {
+  async createUser(
+    username: string,
+    nickname: string,
+    password: string,
+  ): Promise<User | undefined> {
     const r = await this._fetch('/user', {
       method: 'POST',
       body: JSON.stringify({
@@ -94,27 +105,27 @@ export class MoneyBalancerApi {
       }),
     });
 
-    if (!r || r.status !== 200) {
-      return await this._error(r);
+    if (!r || (await this._error(r, 200))) {
+      return undefined;
     }
 
     return await r.json();
   }
 
-  async getUser() {
+  async getUser(): Promise<User | undefined> {
     const r = await this._authorizedFetch('/user', {
       method: 'GET',
     });
 
-    if (!r || r.status !== 200) {
-      return await this._error(r);
+    if (!r || (await this._error(r, 200))) {
+      return undefined;
     }
 
     const json = await r.json();
     return json;
   }
 
-  async createBalance(name: string) {
+  async createBalance(name: string): Promise<Balance | undefined> {
     const r = await this._authorizedFetch('/balance', {
       method: 'POST',
       body: JSON.stringify({
@@ -122,34 +133,60 @@ export class MoneyBalancerApi {
       }),
     });
 
-    if (!r || r.status !== 200) {
-      return await this._error(r);
+    if (!r || (await this._error(r, 200))) {
+      return undefined;
     }
 
     const json = await r.json();
     return json;
   }
 
-  async getBalances() {
-    const r = await this._authorizedFetch('/balance', {
-      method: 'GET',
-    });
-
-    if (!r || r.status !== 200) {
-      return await this._error(r);
-    }
-
-    const json = await r.json();
-    return json;
-  }
-
-  async getBalance(id: number) {
+  async getBalance(id: string): Promise<Balance | 'unauthorized' | undefined> {
     const r = await this._authorizedFetch('/balance/' + id, {
       method: 'GET',
     });
 
-    if (!r || r.status !== 200) {
-      return await this._error(r);
+    if (!r || (await this._error(r, 200, 403))) {
+      return undefined;
+    } else if (r.status === 403) {
+      this._resetError();
+      return 'unauthorized';
+    }
+
+    const json = await r.json();
+    return json;
+  }
+
+  async joinBalance(id: string): Promise<Balance | undefined> {
+    const r = await this._authorizedFetch(`/balance/${id}`, {
+      method: 'POST',
+    });
+
+    if (!r || (await this._error(r, 200))) {
+      return undefined;
+    }
+
+    const json = await r.json();
+    return json;
+  }
+
+  async createPurchase(
+    balanceId: string,
+    amount: number,
+    description: string,
+    consumers: string[],
+  ): Promise<Balance | undefined> {
+    const r = await this._authorizedFetch(`/balance/${balanceId}/purchase`, {
+      method: 'POST',
+      body: JSON.stringify({
+        amount: amount,
+        description: description,
+        consumers: consumers,
+      }),
+    });
+
+    if (!r || (await this._error(r, 200))) {
+      return undefined;
     }
 
     const json = await r.json();

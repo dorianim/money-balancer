@@ -7,8 +7,7 @@ import CollapsableAlert from '../components/CollapsableAlert';
 import { FieldValues, useForm } from 'react-hook-form';
 
 export default function LoginPage() {
-  const { setTitle, error, setError, loginRedirectUrl, setUser, api } =
-    useContext(Context);
+  const { setTitle, loginRedirectUrl, setUser, api } = useContext(Context);
   const navigate = useNavigate();
   const {
     register,
@@ -40,7 +39,6 @@ export default function LoginPage() {
 
     setUser(userData);
 
-    setError({ ...error, open: false });
     setLoading(false);
     navigate(loginRedirectUrl);
   };

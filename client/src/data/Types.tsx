@@ -29,7 +29,7 @@ interface Users {
   [id: string]: PublicUser;
 }
 
-interface UserBalances {
+export interface UserBalances {
   [id: string]: number;
 }
 

@@ -3,19 +3,17 @@ import { useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import CollapsableAlert from '../components/CollapsableAlert';
 import { Context } from '../data/Context';
-import { URL } from '../data/MoneyBalancerApi';
 
 export default function BalanceJoinPage() {
   const { balanceId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { token, setTitle, error, setError, setLoginRedirectUrl } =
-    useContext(Context);
+  const { api, setTitle, setLoginRedirectUrl } = useContext(Context);
 
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (token === '') {
+    if (!api.loggedIn()) {
       setLoginRedirectUrl(location.pathname);
       navigate('/login');
       return;
@@ -25,23 +23,16 @@ export default function BalanceJoinPage() {
 
   const joinBalance = async () => {
     setLoading(true);
-    const r = await fetch(`${URL}/balance/${balanceId}`, {
-      method: 'POST',
-      headers: new Headers({ Authorization: 'Bearer ' + token }),
-    });
+    const r = await api.joinBalance(balanceId ?? '');
     setLoading(false);
-
-    if (r.status !== 200) {
-      const data = await r.json();
-      setError({ severity: 'error', message: data.message, open: true });
+    if (!r) {
       return;
     }
 
-    setError({ ...error, open: false });
     navigate(`/balance/${balanceId}`);
   };
 
-  if (token === '') {
+  if (!api.loggedIn()) {
     return <></>;
   }
 

@@ -1,4 +1,5 @@
 import { Add } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Button,
   CircularProgress,
@@ -12,83 +13,70 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { FieldValues, useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import CollapsableAlert from '../components/CollapsableAlert';
 
 import { Context } from '../data/Context';
-import { URL } from '../data/MoneyBalancerApi';
-import { User } from '../data/Types';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token, setTitle, user, setUser, setError, setLoginRedirectUrl, api } =
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+  const { api, setTitle, user, setUser, setLoginRedirectUrl } =
     useContext(Context);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const newBalanceName = useRef('');
-
   useEffect(() => {
     setTitle('My balances');
-    if (token === '') {
+    if (!api.loggedIn()) {
       setLoginRedirectUrl(location.pathname);
       navigate('/login');
-    } else {
-      loadUserData();
-    }
-  }, [token]);
-
-  const loadUserData = async () => {
-    setLoading(true);
-    const r = await fetch(URL + '/user', {
-      method: 'GET',
-      headers: new Headers({ Authorization: 'Bearer ' + token }),
-    });
-    setLoading(false);
-
-    if (r.status !== 200) {
-      api.logout();
-      return;
-    }
-
-    const user: User = await r.json();
-    console.log(user);
-
-    setUser(user);
-  };
-
-  const createBalance = async () => {
-    setDialogOpen(false);
-    setLoading(true);
-    const r = await fetch(URL + '/balance', {
-      method: 'POST',
-      headers: new Headers({ Authorization: 'Bearer ' + token }),
-      body: JSON.stringify({ name: newBalanceName.current }),
-    });
-
-    if (r.status !== 200) {
-      const data = await r.json();
-      setError({ severity: 'error', message: data.message, open: true });
-      setLoading(false);
       return;
     }
 
     loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    setLoading(true);
+    const r = await api.getUser();
+    setLoading(false);
+
+    if (!r) {
+      api.logout();
+      return;
+    }
+
+    setUser(r);
   };
 
-  if (token === '') {
-    setLoginRedirectUrl(location.pathname);
-    navigate('/login');
+  const onSubmit = async (data: FieldValues) => {
+    setLoading(true);
+    const r = await api.createBalance(data.name);
+    setLoading(false);
+
+    if (!r) {
+      return;
+    }
+
+    setDialogOpen(false);
+    loadUserData();
+  };
+
+  if (!api.loggedIn()) {
     return <></>;
   }
 
   return (
     <>
-      <CollapsableAlert sx={{ marginBottom: 2 }}></CollapsableAlert>
-
       <Typography variant='h5' sx={{ paddingBottom: 2 }}>
         Hello, {user?.nickname}
       </Typography>
@@ -115,29 +103,38 @@ export default function LoginPage() {
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
         <DialogTitle>New balance</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            To create a new balance, please enter a name for it. You can then
-            invite users to join via a link.
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin='dense'
-            id='name'
-            label='Name'
-            fullWidth
-            variant='standard'
-            onChange={e => (newBalanceName.current = e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button onClick={createBalance}>Create</Button>
-        </DialogActions>
+
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogContent>
+            <CollapsableAlert sx={{ marginBottom: 2 }}></CollapsableAlert>
+
+            <DialogContentText>
+              To create a new balance, please enter a name for it. You can then
+              invite users to join via a link.
+            </DialogContentText>
+            <TextField
+              label='Name'
+              disabled={loading}
+              error={errors.name !== undefined}
+              {...register('name', { required: true })}
+              sx={{ marginTop: 2 }}
+              fullWidth
+              autoFocus
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDialogOpen(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <LoadingButton loading={loading} type='submit'>
+              Create
+            </LoadingButton>
+          </DialogActions>
+        </form>
       </Dialog>
 
       <Modal
-        open={loading}
+        open={loading && !dialogOpen}
         sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
         <CircularProgress></CircularProgress>
