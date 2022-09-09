@@ -164,7 +164,9 @@ export default function LoginPage() {
 
       {!loading ? (
         <PurchaseHistory
-          purchases={balanceData?.purchases ?? []}
+          purchases={(balanceData?.purchases ?? []).sort((a, b) => {
+            return b.timestamp - a.timestamp;
+          })}
           users={balanceData?.users ?? {}}
           currentUserId={user?.id ?? ''}
           onCreateNewPurchase={() => setDialogOpen(true)}
