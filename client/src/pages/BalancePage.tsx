@@ -237,13 +237,34 @@ export default function LoginPage() {
               label='Amount (in €)'
               inputProps={{
                 inputMode: 'numeric',
+                step: '0.01',
               }}
-              helperText='Euros and cents in the format separated by a dot'
+              helperText={errors.amount && 'must be greater than 0'}
               disabled={loading}
               error={errors.amount !== undefined}
+              defaultValue={'0.00'}
               {...register('amount', {
                 required: true,
-                pattern: /[0-9]*(.[0-9][0-9]|)/,
+                pattern: /.*[1-9].*/,
+                onChange: e => {
+                  e.target.value = e.target.value.replace(',', '.');
+                  let amount: string = e.target.value.replace(/[^0-9]/g, '');
+
+                  while (amount.length < 3) {
+                    amount = '0' + amount;
+                  }
+
+                  amount =
+                    amount.substring(0, amount.length - 2) +
+                    '.' +
+                    amount.substring(amount.length - 2);
+
+                  while (amount[0] === '0' && amount.length > 4) {
+                    amount = amount.substring(1);
+                  }
+
+                  e.target.value = amount;
+                },
               })}
               sx={{ marginTop: 2 }}
               fullWidth
