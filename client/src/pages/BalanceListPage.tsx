@@ -53,6 +53,7 @@ export default function LoginPage() {
 
     if (!r) {
       api.logout();
+      navigate('/login');
       return;
     }
 
