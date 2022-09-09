@@ -1,6 +1,7 @@
 import './App.css';
 import Theme from './utils/Theme';
 import Routing from './utils/Routing';
+import ContextWrapper from './utils/ContextWrapper';
 
 /**
  *
@@ -8,9 +9,11 @@ import Routing from './utils/Routing';
  */
 function App() {
   return (
-    <Theme>
-      <Routing />
-    </Theme>
+    <ContextWrapper>
+      <Theme>
+        <Routing />
+      </Theme>
+    </ContextWrapper>
   );
 }
 

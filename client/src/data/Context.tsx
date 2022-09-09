@@ -1,5 +1,6 @@
 import { AlertColor } from '@mui/material';
 import { createContext } from 'react';
+import { ThemeType } from '../utils/Theme';
 import { MoneyBalancerApi } from './MoneyBalancerApi';
 import { User } from './Types';
 
@@ -26,6 +27,9 @@ export interface ContextType {
 
   goBackToUrl: string | undefined;
   setGoBackToUrl: (goBackToUrl: string | undefined) => void;
+
+  theme: ThemeType;
+  setTheme: (theme: ThemeType) => void;
 
   api: MoneyBalancerApi;
 }
@@ -69,6 +73,11 @@ export const Context = createContext<ContextType>({
 
   goBackToUrl: undefined,
   setGoBackToUrl: () => {
+    return;
+  },
+
+  theme: 'dark',
+  setTheme: () => {
     return;
   },
 });

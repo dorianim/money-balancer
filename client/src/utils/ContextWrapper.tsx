@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { Context, ErrorData } from '../data/Context';
 import { MoneyBalancerApi } from '../data/MoneyBalancerApi';
 import { User } from '../data/Types';
+import { ThemeType } from './Theme';
 
 interface StoredContext {
   token: string;
   loginRedirectUrl: string;
   user: User | undefined;
+  theme: ThemeType;
 }
 
 /**
@@ -21,6 +23,7 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
     token: '',
     loginRedirectUrl: '/',
     user: undefined,
+    theme: 'system',
   };
 
   // load old values from localstorage
@@ -46,6 +49,7 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
     storedContext.loginRedirectUrl,
   );
   const [goBackToUrl, setGoBackToUrl] = useState<string | undefined>(undefined);
+  const [theme, setTheme] = useState<ThemeType>(storedContext.theme);
   const api = new MoneyBalancerApi({ token, setToken, setError });
 
   useEffect(() => {
@@ -55,9 +59,10 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
         token: token,
         loginRedirectUrl: loginRedirectUrl,
         user: user,
+        theme: theme,
       }),
     );
-  }, [token, loginRedirectUrl, user]);
+  }, [token, loginRedirectUrl, user, theme]);
 
   return (
     <Context.Provider
@@ -74,6 +79,8 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
         api,
         goBackToUrl,
         setGoBackToUrl,
+        theme,
+        setTheme,
       }}
     >
       {children}

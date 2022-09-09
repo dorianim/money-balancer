@@ -1,11 +1,21 @@
 import { CssBaseline } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { Context } from '../data/Context';
 
-export const theme = createTheme({
+export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
   },
 });
+
+export const lightTheme = createTheme({
+  palette: {
+    mode: 'light',
+  },
+});
+
+export type ThemeType = 'dark' | 'light' | 'system';
 
 /**
  * Sets a MaterialUi theme for its children
@@ -13,9 +23,44 @@ export const theme = createTheme({
  * @return {JSX.Element}
  */
 export default function Theme(props: { children: JSX.Element }) {
+  const getThemeToUse = () => {
+    switch (theme) {
+      case 'dark':
+        return darkTheme;
+      case 'light':
+        return lightTheme;
+      case 'system':
+        if (
+          window.matchMedia &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches
+        ) {
+          return darkTheme;
+        } else {
+          return lightTheme;
+        }
+    }
+  };
+
   const { children } = props;
+  const { theme } = useContext(Context);
+  const eventListenerAdded = useRef(false);
+  const [themeToUse, setThemeToUse] = useState(getThemeToUse());
+
+  useEffect(() => {
+    setThemeToUse(getThemeToUse());
+
+    if (eventListenerAdded.current) return;
+
+    eventListenerAdded.current = true;
+    window
+      .matchMedia('(prefers-color-scheme: dark)')
+      .addEventListener('change', () => {
+        setThemeToUse(getThemeToUse());
+      });
+  }, [theme]);
+
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={themeToUse}>
       <CssBaseline />
       {children}
     </ThemeProvider>

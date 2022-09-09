@@ -1,4 +1,4 @@
-import { ArrowBack, Logout, MoreVert } from '@mui/icons-material';
+import { ArrowBack, MoreVert } from '@mui/icons-material';
 import {
   AppBar,
   Toolbar,
@@ -7,13 +7,12 @@ import {
   Skeleton,
   IconButton,
   Collapse,
-  Menu,
-  MenuItem,
 } from '@mui/material';
 import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Context } from '../data/Context';
+import HeaderMenu from './HeaderMenu';
 
 /**
  * Creates a Header Component that displays the reservation steps
@@ -62,32 +61,12 @@ export default function Header() {
         </Toolbar>
       </Container>
 
-      <Menu
+      <HeaderMenu
         anchorEl={anchorEl}
-        open={anchorEl !== undefined}
-        onClose={() => setAnchorEl(undefined)}
-        MenuListProps={{
-          'aria-labelledby': 'basic-button',
+        onClose={() => {
+          setAnchorEl(undefined);
         }}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
-        <MenuItem
-          onClick={() => {
-            setAnchorEl(undefined);
-            api.logout();
-            navigate('/login');
-          }}
-        >
-          <Logout sx={{ marginRight: 1 }}></Logout> Logout
-        </MenuItem>
-      </Menu>
+      ></HeaderMenu>
     </AppBar>
   );
 }
