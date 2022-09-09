@@ -23,17 +23,19 @@ export type ThemeType = 'dark' | 'light' | 'system';
  * @return {JSX.Element}
  */
 export default function Theme(props: { children: JSX.Element }) {
+  const { children } = props;
+  const { theme } = useContext(Context);
+  const eventListenerAdded = useRef(false);
+  const themeRef = useRef<ThemeType>(theme);
+
   const getThemeToUse = () => {
-    switch (theme) {
+    switch (themeRef.current) {
       case 'dark':
         return darkTheme;
       case 'light':
         return lightTheme;
       case 'system':
-        if (
-          window.matchMedia &&
-          window.matchMedia('(prefers-color-scheme: dark)').matches
-        ) {
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           return darkTheme;
         } else {
           return lightTheme;
@@ -41,12 +43,10 @@ export default function Theme(props: { children: JSX.Element }) {
     }
   };
 
-  const { children } = props;
-  const { theme } = useContext(Context);
-  const eventListenerAdded = useRef(false);
   const [themeToUse, setThemeToUse] = useState(getThemeToUse());
 
   useEffect(() => {
+    themeRef.current = theme;
     setThemeToUse(getThemeToUse());
 
     if (eventListenerAdded.current) return;
