@@ -92,7 +92,6 @@ async function createUser(request: Request, env: Env) {
       .setProtectedHeader({ alg: 'HS512' })
       .setIssuedAt()
       .setIssuer('de:itsblue:money-balancer')
-      .setExpirationTime('2h')
       .sign(encoder.encode(env.ENV_JWT_SECRET));
   
     return json({token: jwt});

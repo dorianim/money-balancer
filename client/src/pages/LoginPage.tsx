@@ -18,13 +18,14 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   useEffect(() => {
+    if (api.loggedIn()) {
+      navigate('/');
+      return;
+    }
+
     setTitle('Login');
     setGoBackToUrl(undefined);
   }, []);
-
-  if (api.loggedIn()) {
-    navigate('/');
-  }
 
   const onSubmit = async (data: FieldValues) => {
     setLoading(true);
