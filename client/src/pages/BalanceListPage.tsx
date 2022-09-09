@@ -1,4 +1,4 @@
-import { Add } from '@mui/icons-material';
+import { Add, ChevronRight } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Button,
@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Grid,
   Modal,
+  Skeleton,
   TextField,
   Typography,
 } from '@mui/material';
@@ -84,19 +85,31 @@ export default function LoginPage() {
       </Typography>
 
       <Grid spacing={2} container>
-        {Object.keys(user?.balances || {}).map(balanceId => (
-          <Grid xs={12} key={`balance-item-${balanceId}`} item>
-            <Button
-              onClick={() => navigate(`/balance/${balanceId}`)}
-              variant='contained'
-            >
-              {user?.balances[balanceId].name}
-            </Button>
-          </Grid>
-        ))}
+        {!loading
+          ? Object.keys(user?.balances || {}).map(balanceId => (
+              <Grid xs={12} key={`balance-item-${balanceId}`} item>
+                <Button
+                  onClick={() => navigate(`/balance/${balanceId}`)}
+                  variant='contained'
+                  endIcon={<ChevronRight />}
+                  fullWidth
+                >
+                  {user?.balances[balanceId].name}
+                </Button>
+              </Grid>
+            ))
+          : new Array(2).fill(0).map((_, i) => (
+              <Grid item xs={12} key={`current-balance-skeleton-${i}`}>
+                <Skeleton variant='rounded' width={'100%'} height={36.5} />
+              </Grid>
+            ))}
 
         <Grid item xs={12}>
-          <Button variant='outlined' onClick={() => setDialogOpen(true)}>
+          <Button
+            variant='outlined'
+            onClick={() => setDialogOpen(true)}
+            disabled={loading}
+          >
             <Add sx={{ marginRight: 1 }}></Add>
             New balance
           </Button>
@@ -134,13 +147,6 @@ export default function LoginPage() {
           </DialogActions>
         </form>
       </Dialog>
-
-      <Modal
-        open={loading && !dialogOpen}
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      >
-        <CircularProgress></CircularProgress>
-      </Modal>
     </>
   );
 }
