@@ -1,0 +1,336 @@
+openapi: 3.0.1
+info:
+  title: Money-balancer API
+  description: |-
+    API of money-balancer
+  version: 1.0.0
+servers:
+  - url: /
+tags:
+  - name: user
+    description: User
+  - name: balance
+    description: Balance
+
+paths:
+  /user:
+    get:
+      tags:
+        - user
+      summary: get detailed information about the authenticated user
+      operationId: getUser
+      responses:
+        200:
+          description: detailed information about the user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - user
+      summary: create a user
+      operationId: createUser
+      requestBody:
+        description: detailed information about the user
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreationRequest"
+        required: true
+      responses:
+        200:
+          description: detailed information about the new user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /user/token:
+    post:
+      tags:
+        - user
+      summary: create an authentication token
+      operationId: createAuthenticationToken
+      requestBody:
+        description: username and password
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserAuthenticationRequest"
+        required: true
+      responses:
+        200:
+          description: detailed information about the new user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+
+  /balance:
+    post:
+      tags:
+        - balance
+      summary: create a balance
+      operationId: createBalance
+      requestBody:
+        description: detailed information about the balance
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BalanceCreationRequest"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: detailed information about the new balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+        403:
+          description: the user does not have access to the balance, but they can join the balance
+
+  /balance/{balanceId}:
+    get:
+      tags:
+        - balance
+      summary: get detailed information about a balance
+      operationId: getBalance
+      parameters:
+        - in: path
+          name: balanceId
+          schema:
+            type: string
+            format: balanceId
+          required: true
+          description: id of the balance
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: detailed information about the balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+
+    post:
+      tags:
+        - balance
+      summary: join a balance
+      operationId: joinBalance
+      parameters:
+        - in: path
+          name: balanceId
+          schema:
+            type: string
+            format: balanceId
+          required: true
+          description: id of the balance
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: detailed information about the updated balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+
+  /balance/{balanceId}/purchase:
+    post:
+      tags:
+        - balance
+      summary: create a pruchase in a balance
+      parameters:
+        - in: path
+          name: balanceId
+          schema:
+            type: string
+            format: balanceId
+          required: true
+          description: id of the balance
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: detailed information about the purchase
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseCreationRequest"
+      responses:
+        200:
+          description: detailed information about the updated balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: userId
+          example: f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670
+        username:
+          type: string
+        nickname:
+          type: string
+        balances:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: balanceId
+                example: 55f2eff62417ee43432fb78763e3405f42e10e56c744601bc2d27c8de7ef91bb
+              name:
+                type: string
+                example: Some Balance
+
+    PublicUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: userId
+          example: f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670
+        username:
+          type: string
+        nickname:
+          type: string
+
+    UserCreationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        nickname:
+          type: string
+        password:
+          type: string
+      required: [username, nickname, password]
+
+    UserAuthenticationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    Purchase:
+      type: object
+      properties:
+        timestamp:
+          type: number
+          format: unix timetamp
+          example: 1662533034
+        amount:
+          type: number
+          format: unsigned long
+          description: the amount of money purchased
+          example: 20
+        purchaser:
+          type: string
+          format: userId
+          description: id of the user who purchased
+          example: 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
+        consumers:
+          type: array
+          items:
+            type: string
+            format: userId
+          description: ids of the user who use the purchased good
+          example:
+            - f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670
+            - 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
+        description:
+          type: string
+          example: "Bread"
+
+    PurchaseCreationRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: unsigned long
+          description: the amount of money purchased
+          example: 20
+        consumers:
+          type: array
+          items:
+            type: string
+            format: userId
+          description: ids of the user who use the purchased good
+          example:
+            - f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670
+            - 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
+        description:
+          type: string
+          example: "Bread"
+
+    Balance:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 55f2eff62417ee43432fb78763e3405f42e10e56c744601bc2d27c8de7ef91bb
+        name:
+          type: string
+          example: Some Balance
+        owner:
+          type: string
+          format: userId
+          description: id of the user who owns the balance
+          example: 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
+        userBalances:
+          type: object
+          additionalProperties:
+            type: number
+            format: unsigned long
+            description: The key consists of two userIds concatenated with a colon (:), where the first id is the alphabetically smaller one. The value is the balance of the first user with the second one. In this example, alice ows bob 10, because Bob purchased an item for 20 that is used by alice and bob.
+          example:
+            "1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2:f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670": 10
+
+        users:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/PublicUser"
+          example:
+            f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670:
+              id: f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670
+              username: alice
+              nickname: Alice
+            1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2:
+              id: 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
+              username: bob
+              nickname: Bob
+
+        purchases:
+          type: array
+          items:
+            $ref: "#/components/schemas/Purchase"
+
+    BalanceCreationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+
+  securitySchemes:
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
