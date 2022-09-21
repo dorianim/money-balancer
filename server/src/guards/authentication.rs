@@ -83,5 +83,10 @@ pub fn generate_jwt(user: &user::Model) -> String {
 }
 
 fn get_secret() -> String {
-    std::env::var("JWT_SECRET").unwrap()
+    let result = std::env::var("JWT_SECRET");
+    if let Ok(secret) = result {
+        return secret;
+    }
+
+    return uuid::Uuid::new_v4().to_string();
 }
