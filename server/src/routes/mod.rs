@@ -1,2 +1,2 @@
-pub mod balance;
+pub mod group;
 pub mod user;

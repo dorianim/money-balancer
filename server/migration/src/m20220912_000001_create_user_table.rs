@@ -4,7 +4,7 @@ pub struct Migration;
 
 impl MigrationName for Migration {
     fn name(&self) -> &str {
-        "m20220912_000002_create_balance_table"
+        "m20220912_000001_create_user_table"
     }
 }
 
@@ -14,14 +14,16 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Balance::Table)
+                    .table(User::Table)
+                    .col(ColumnDef::new(User::Id).string().not_null().primary_key())
                     .col(
-                        ColumnDef::new(Balance::Id)
+                        ColumnDef::new(User::Username)
                             .string()
-                            .not_null()
-                            .primary_key(),
+                            .unique_key()
+                            .not_null(),
                     )
-                    .col(ColumnDef::new(Balance::Name).string().not_null())
+                    .col(ColumnDef::new(User::Nickname).string().not_null())
+                    .col(ColumnDef::new(User::Password).string().not_null())
                     .to_owned(),
             )
             .await
@@ -29,14 +31,16 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Balance::Table).to_owned())
+            .drop_table(Table::drop().table(User::Table).to_owned())
             .await
     }
 }
 
 #[derive(Iden)]
-pub enum Balance {
+pub enum User {
     Table,
     Id,
-    Name,
+    Username,
+    Nickname,
+    Password,
 }

@@ -1,5 +1,5 @@
 use crate::guards::authentication;
-use crate::model::{balance, balance_member, prelude::*, user};
+use crate::model::{group, group_member, prelude::*, user};
 use pwhash::bcrypt;
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -25,11 +25,11 @@ struct FullUser {
     id: String,
     username: String,
     nickname: String,
-    balances: Vec<ReducedBalance>,
+    groups: Vec<ReducedGroup>,
 }
 
 #[derive(Serialize)]
-struct ReducedBalance {
+struct ReducedGroup {
     id: String,
     name: String,
 }
@@ -46,10 +46,10 @@ async fn get_current_user(
 ) -> Result<Json<FullUser>, Status> {
     let db = db as &DatabaseConnection;
 
-    let balances = get_balances_of_user(user.clone(), db).await;
+    let groups = get_groups_of_user(user.clone(), db).await;
 
-    if let Err(err) = balances {
-        println!("   >> ERROR loading balances: {:?}", err);
+    if let Err(err) = groups {
+        println!("   >> ERROR loading groups: {:?}", err);
         return Err(Status::InternalServerError);
     }
 
@@ -57,7 +57,7 @@ async fn get_current_user(
         id: user.id,
         username: user.username,
         nickname: user.nickname,
-        balances: balances.unwrap(),
+        groups: groups.unwrap(),
     }))
 }
 
@@ -90,7 +90,7 @@ async fn create_user(
         id: new_user_id,
         username: user_creation_request.username.to_string(),
         nickname: user_creation_request.nickname.to_string(),
-        balances: Vec::new(),
+        groups: Vec::new(),
     }))
 }
 
@@ -124,29 +124,29 @@ async fn token(
     }
 }
 
-async fn get_balances_of_user(
+async fn get_groups_of_user(
     user: user::Model,
     db: &DatabaseConnection,
-) -> Result<Vec<ReducedBalance>, DbErr> {
+) -> Result<Vec<ReducedGroup>, DbErr> {
     Ok(Vec::new())
 
-    /*let balances = user
-        .find_related(balance_member::Entity)
-        .find_also_related(balance::Entity)
+    /*let groups = user
+        .find_related(group_member::Entity)
+        .find_also_related(group::Entity)
         .all(db)
         .await
-        .expect("error loading balances")
+        .expect("error loading groups")
         .into_iter()
         .map(|b| {
             let b = b.1.unwrap();
-            ReducedBalance {
+            ReducedGroup {
                 id: b.id,
                 name: b.name,
             }
         })
-        .collect::<Vec<ReducedBalance>>();
+        .collect::<Vec<ReducedGroup>>();
 
-    Ok(balances)*/
+    Ok(groups)*/
 }
 
 pub fn routes() -> Vec<rocket::Route> {

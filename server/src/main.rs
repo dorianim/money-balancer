@@ -2,10 +2,10 @@
 mod guards;
 mod model;
 mod routes;
-mod schema;
 
+use migration;
 use rocket::*;
-use routes::balance::routes;
+use routes::group::routes;
 use sea_orm::*;
 use sea_orm_migration::prelude::*;
 
@@ -46,7 +46,7 @@ async fn set_up_db() -> Result<DatabaseConnection, DbErr> {
     };
 
     //let schema_manager = SchemaManager::new(&db);
-    schema::Migrator::up(&db, None)
+    migration::Migrator::up(&db, None)
         .await
         .expect("Error applying migrations!");
 
@@ -69,5 +69,5 @@ async fn rocket() -> _ {
         .manage(db)
         .mount("/", routes![index])
         .mount("/user", routes::user::routes())
-        .mount("/balance", routes::balance::routes())
+        .mount("/balance", routes::group::routes())
 }
