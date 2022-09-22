@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::model::{debt, group, group_member, prelude::*, user};
+use crate::services::user::{FullUser, UserService};
 use futures::future::{join_all, Map};
 use pwhash::bcrypt;
 use rocket::http::Status;
@@ -26,28 +27,22 @@ struct ReducedUser {
 struct FullGroup {
     id: String,
     name: String,
-    user_debts: HashMap<String, f64>,
+    debts: HashMap<String, i32>,
     members: HashMap<String, ReducedUser>,
 }
 
 #[get("/")]
-async fn get_all_groups(
-    user: user::Model,
-    db: &State<DatabaseConnection>,
-) -> Result<Json<Vec<FullGroup>>, Status> {
-    let db = db as &DatabaseConnection;
+async fn get_all_groups(user: FullUser) -> Result<Json<Vec<FullGroup>>, Status> {
+    /*let groups = user
+    .find_related(group_member::Entity)
+    .find_also_related(group::Entity)
+    .all(db)
+    .await
+    .expect("error loading groups")
+    .into_iter()
+    .map(|b| b.1.unwrap());*/
 
-    Ok(Json(Vec::new()))
-    /*let groups = Vec::new().into_iter(); /*user
-                                           .find_related(group_member::Entity)
-                                           .find_also_related(group::Entity)
-                                           .all(db)
-                                           .await
-                                           .expect("error loading groups")
-                                           .into_iter()
-                                           .map(|b| b.1.unwrap());*/
-
-    let groups_with_members_and_groups = groups.map(|b| async {
+    /*let groups_with_members_and_groups = groups.map(|b| async {
         let members = get_members_of_group(b.clone(), db)
             .await
             .into_iter()
@@ -63,35 +58,20 @@ async fn get_all_groups(
             })
             .collect::<HashMap<String, ReducedUser>>();
 
-        let user_debts = get_user_debts_of_group(b.clone(), db)
-            .await
-            .into_iter()
-            .map(|user_debt| {
-                (
-                    format!("{}:{}", user_debt.creditor_id, user_debt.debtor_id),
-                    user_debt.amount,
-                )
-            })
-            .collect::<HashMap<String, f64>>();
-
         FullGroup {
             id: b.id,
             name: b.name,
-            user_debts: user_debts,
+            debts: HashMap::new(),
             members: members,
         }
-    });
+    });*/
 
-    Ok(Json(join_all(groups_with_members_and_groups).await))*/
+    Ok(Json(Vec::new()))
 }
 
 #[post("/", data = "<group_creation_request>")]
-async fn create_group(
-    user: user::Model,
-    db: &State<DatabaseConnection>,
-    group_creation_request: Json<GroupCreationRequest>,
-) {
-    let db = db as &DatabaseConnection;
+async fn create_group(user: FullUser, group_creation_request: Json<GroupCreationRequest>) {
+    /*let db = db as &DatabaseConnection;
 
     let new_group_id = uuid::Uuid::new_v4().to_string();
 
@@ -112,32 +92,7 @@ async fn create_group(
     })
     .exec(db)
     .await
-    .expect("error creating group member");
-}
-
-async fn get_members_of_group(group: group::Model, db: &DatabaseConnection) -> Vec<user::Model> {
-    /*group
-    .find_related(group_member::Entity)
-    .find_also_related(user::Entity)
-    .all(db)
-    .await
-    .expect("error loading group members")
-    .into_iter()
-    .map(|group_member| group_member.1.unwrap())
-    .collect::<Vec<user::Model>>()*/
-    Vec::new()
-}
-async fn get_user_debts_of_group(group: group::Model, db: &DatabaseConnection) -> Vec<debt::Model> {
-    /*group
-    .find_related(group_member::Entity)
-    .find_with_related(user_debt::Entity)
-    .all(db)
-    .await
-    .expect("error loading group member user debts")
-    .into_iter()
-    .map(|group_member| group_member.1.unwrap())
-    .collect::<Vec<user_debt::Model>>()*/
-    Vec::new()
+    .expect("error creating group member");*/
 }
 
 pub fn routes() -> Vec<rocket::Route> {

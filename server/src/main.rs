@@ -2,12 +2,14 @@
 mod guards;
 mod model;
 mod routes;
+mod services;
 
 use migration;
 use rocket::*;
 use routes::group::routes;
 use sea_orm::*;
 use sea_orm_migration::prelude::*;
+use std::sync::Arc;
 
 // Change this according to your database implementation,
 // or supply it as an environment variable.
@@ -65,9 +67,11 @@ async fn rocket() -> _ {
         Err(e) => panic!("{}", e),
     };
 
+    let user_service = services::user::UserService::new(Arc::new(db));
+
     rocket::build()
-        .manage(db)
+        .manage(user_service)
         .mount("/", routes![index])
         .mount("/user", routes::user::routes())
-        .mount("/balance", routes::group::routes())
+        .mount("/group", routes::group::routes())
 }
