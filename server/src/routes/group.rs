@@ -1,100 +1,65 @@
-use std::collections::HashMap;
-
-use crate::model::{debt, group, group_member, prelude::*, user};
-use crate::services::user::{FullUser, UserService};
-use futures::future::{join_all, Map};
-use pwhash::bcrypt;
+use crate::services::group::{Group, GroupMember, GroupService};
+use crate::services::user::User;
 use rocket::http::Status;
 use rocket::serde::json::Json;
-use rocket::serde::{Deserialize, Serialize};
+use rocket::serde::Deserialize;
 use rocket::*;
-use sea_orm::entity::prelude::*;
-use sea_orm::*;
-
 #[derive(Deserialize)]
 struct GroupCreationRequest {
     name: String,
 }
 
-#[derive(Serialize)]
-struct ReducedUser {
-    id: String,
-    username: String,
-    nickname: String,
-}
-
-#[derive(Serialize)]
-struct FullGroup {
-    id: String,
-    name: String,
-    debts: HashMap<String, i32>,
-    members: HashMap<String, ReducedUser>,
-}
-
 #[get("/")]
-async fn get_all_groups(user: FullUser) -> Result<Json<Vec<FullGroup>>, Status> {
-    /*let groups = user
-    .find_related(group_member::Entity)
-    .find_also_related(group::Entity)
-    .all(db)
-    .await
-    .expect("error loading groups")
-    .into_iter()
-    .map(|b| b.1.unwrap());*/
+async fn get_all_groups(
+    group_service: &State<GroupService>,
+    user: User,
+) -> Result<Json<Vec<Group>>, Status> {
+    let group_service = group_service as &GroupService;
+    Ok(Json(group_service.get_groups_of_user(user).await))
+}
 
-    /*let groups_with_members_and_groups = groups.map(|b| async {
-        let members = get_members_of_group(b.clone(), db)
-            .await
-            .into_iter()
-            .map(|group_member| {
-                (
-                    group_member.clone().id,
-                    ReducedUser {
-                        id: group_member.id,
-                        username: group_member.username,
-                        nickname: group_member.nickname,
-                    },
-                )
-            })
-            .collect::<HashMap<String, ReducedUser>>();
+#[get("/<group_id>")]
+async fn get_group(
+    group_id: String,
+    group_service: &State<GroupService>,
+    user: User,
+) -> Result<Json<Group>, Status> {
+    match group_service.get_group_of_user(group_id, user.id).await {
+        None => Err(Status::NotFound),
+        Some(group) => Ok(Json(group)),
+    }
+}
 
-        FullGroup {
-            id: b.id,
-            name: b.name,
-            debts: HashMap::new(),
-            members: members,
-        }
-    });*/
-
-    Ok(Json(Vec::new()))
+#[get("/<group_id>/member")]
+async fn get_group_members(
+    group_id: String,
+    group_service: &State<GroupService>,
+    user: User,
+) -> Result<Json<Vec<GroupMember>>, Status> {
+    match group_service
+        .get_members_of_group_of_user(group_id, user.id)
+        .await
+    {
+        None => Err(Status::NotFound),
+        Some(members) => Ok(Json(members)),
+    }
 }
 
 #[post("/", data = "<group_creation_request>")]
-async fn create_group(user: FullUser, group_creation_request: Json<GroupCreationRequest>) {
-    /*let db = db as &DatabaseConnection;
+async fn create_group(
+    group_service: &State<GroupService>,
+    user: User,
+    group_creation_request: Json<GroupCreationRequest>,
+) -> Json<Group> {
+    let group_service = group_service as &GroupService;
 
-    let new_group_id = uuid::Uuid::new_v4().to_string();
-
-    let new_group = group::ActiveModel {
-        id: ActiveValue::Set(new_group_id.to_owned()),
-        name: ActiveValue::Set(group_creation_request.name.to_owned()),
-    };
-
-    Group::insert(new_group)
-        .exec(db)
-        .await
-        .expect("error creating group");
-
-    GroupMember::insert(group_member::ActiveModel {
-        user_id: ActiveValue::Set(user.id.to_owned()),
-        group_id: ActiveValue::Set(new_group_id.to_owned()),
-        is_owner: ActiveValue::Set(1),
-    })
-    .exec(db)
-    .await
-    .expect("error creating group member");*/
+    Json(
+        group_service
+            .create_group(group_creation_request.name.to_owned(), user)
+            .await,
+    )
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![get_all_groups, create_group]
+    routes![get_all_groups, get_group, get_group_members, create_group]
 }

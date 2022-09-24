@@ -24,4 +24,14 @@ impl Related<super::group_member::Entity> for Entity {
     }
 }
 
+impl Related<super::group::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::group_member::Relation::Group.def()
+    }
+
+    fn via() -> Option<RelationDef> {
+        Some(super::group_member::Relation::User.def().rev())
+    }
+}
+
 impl ActiveModelBehavior for ActiveModel {}

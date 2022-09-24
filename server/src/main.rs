@@ -6,7 +6,6 @@ mod services;
 
 use migration;
 use rocket::*;
-use routes::group::routes;
 use sea_orm::*;
 use sea_orm_migration::prelude::*;
 use std::sync::Arc;
@@ -62,15 +61,17 @@ async fn index() -> &'static str {
 
 #[launch] // The "main" function of the program
 async fn rocket() -> _ {
-    let db = match set_up_db().await {
+    let db = Arc::new(match set_up_db().await {
         Ok(db) => db,
         Err(e) => panic!("{}", e),
-    };
+    });
 
-    let user_service = services::user::UserService::new(Arc::new(db));
+    let user_service = services::user::UserService::new(db.clone());
+    let group_service = services::group::GroupService::new(db);
 
     rocket::build()
         .manage(user_service)
+        .manage(group_service)
         .mount("/", routes![index])
         .mount("/user", routes::user::routes())
         .mount("/group", routes::group::routes())

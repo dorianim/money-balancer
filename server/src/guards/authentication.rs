@@ -20,7 +20,7 @@ pub struct JwtClaims {
 }
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for services::user::FullUser {
+impl<'r> FromRequest<'r> for services::user::User {
     type Error = JwtError;
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {

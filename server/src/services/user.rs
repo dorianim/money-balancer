@@ -6,23 +6,25 @@ use sea_orm::*;
 use std::sync::Arc;
 
 #[derive(Serialize)]
-pub struct FullUser {
+pub struct User {
     pub id: String,
     pub username: String,
     pub nickname: String,
-    pub groups: Vec<ReducedGroup>,
-}
-
-#[derive(Serialize)]
-pub struct ReducedGroup {
-    id: String,
-    name: String,
-    is_owner: bool,
 }
 
 #[derive(Debug)]
 pub struct UserService {
     db: Arc<DatabaseConnection>,
+}
+
+impl Into<User> for crate::model::user::Model {
+    fn into(self) -> User {
+        User {
+            id: self.id,
+            username: self.username,
+            nickname: self.nickname,
+        }
+    }
 }
 
 impl UserService {
@@ -35,7 +37,7 @@ impl UserService {
         username: String,
         nickname: String,
         password: String,
-    ) -> Result<FullUser, ()> {
+    ) -> Result<User, ()> {
         let new_user_id = uuid::Uuid::new_v4().to_string();
 
         let new_user = model::user::ActiveModel {
@@ -50,11 +52,10 @@ impl UserService {
             .await
             .map_err(|_| ())?;
 
-        Ok(FullUser {
+        Ok(User {
             id: new_user_id,
             username: username,
             nickname: nickname,
-            groups: Vec::new(),
         })
     }
 
@@ -81,7 +82,7 @@ impl UserService {
         }
     }
 
-    pub async fn get_user_by_id(&self, user_id: String) -> Result<FullUser, ()> {
+    pub async fn get_user_by_id(&self, user_id: String) -> Result<User, ()> {
         let user = model::user::Entity::find_by_id(user_id)
             .one(self.db.as_ref())
             .await
@@ -93,28 +94,6 @@ impl UserService {
 
         let user = user.unwrap();
 
-        let user_groups = user
-            .find_related(model::group_member::Entity)
-            .find_also_related(model::group::Entity)
-            .all(self.db.as_ref())
-            .await
-            .expect("Failed to query user groups!")
-            .into_iter()
-            .map(|(member, group)| {
-                let group = group.unwrap();
-                ReducedGroup {
-                    id: group.id,
-                    name: group.name,
-                    is_owner: member.is_owner == 1,
-                }
-            })
-            .collect::<Vec<ReducedGroup>>();
-
-        Ok(FullUser {
-            id: user.id,
-            username: user.username,
-            nickname: user.nickname,
-            groups: user_groups,
-        })
+        Ok(user.into())
     }
 }
