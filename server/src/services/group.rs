@@ -1,5 +1,5 @@
 use crate::model::{self};
-use ::serde::Serialize;
+use ::serde::{Deserialize, Serialize};
 use futures::future;
 use sea_orm::*;
 
@@ -7,14 +7,14 @@ use std::sync::Arc;
 
 use super::user::User;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GroupMember {
     id: String,
     nickname: String,
     is_owner: bool,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Group {
     id: String,
     name: String,
@@ -49,14 +49,10 @@ impl GroupService {
             .await
             .expect("error creating group");
 
-        model::group_member::Entity::insert(model::group_member::ActiveModel {
-            user_id: ActiveValue::Set(owner.id.to_owned()),
-            group_id: ActiveValue::Set(new_group_id.to_owned()),
-            is_owner: ActiveValue::Set(1),
-        })
-        .exec(self.db.as_ref())
-        .await
-        .expect("error creating group member");
+        assert!(
+            self.create_group_member(new_group_id.to_owned(), owner.id.to_owned(), true)
+                .await
+        );
 
         Group {
             id: new_group_id,
@@ -69,9 +65,29 @@ impl GroupService {
         }
     }
 
-    pub async fn get_groups_of_user(&self, user: User) -> Vec<Group> {
+    pub async fn create_group_member(
+        &self,
+        group_id: String,
+        user_id: String,
+        is_owner: bool,
+    ) -> bool {
+        let res = model::group_member::Entity::insert(model::group_member::ActiveModel {
+            user_id: ActiveValue::Set(user_id),
+            group_id: ActiveValue::Set(group_id),
+            is_owner: ActiveValue::Set(if is_owner { 1 } else { 0 }),
+        })
+        .exec(self.db.as_ref())
+        .await;
+
+        match res {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+
+    pub async fn get_groups_of_user(&self, user_id: String) -> Vec<Group> {
         let groups = model::group_member::Entity::find()
-            .filter(model::group_member::Column::UserId.eq(user.id))
+            .filter(model::group_member::Column::UserId.eq(user_id))
             .find_also_related(model::group::Entity)
             .all(self.db.as_ref())
             .await

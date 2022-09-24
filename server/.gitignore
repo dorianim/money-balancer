@@ -1,2 +1,4 @@
 money-balancer.sqlite
 target
+.env
+test.sh
