@@ -1,7 +1,7 @@
-export DATABASE_URL="sqlite:./money-balancer.sqlite?mode=rwc"
+DB_FILE="./.tmp-db.sqlite"
+export DATABASE_URL="sqlite:$DB_FILE?mode=rwc"
 
-while [[ "$(sea-orm-cli migrate status)" == *"Pending"* ]]; do
-    sea-orm-cli migrate up
-done
-
+sea-orm-cli migrate fresh
 sea-orm-cli generate entity -o src/model
+
+rm $DB_FILE
