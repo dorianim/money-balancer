@@ -16,6 +16,10 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::group_member::Entity")]
     GroupMember,
+    #[sea_orm(has_many = "super::transaction::Entity")]
+    Transaction,
+    #[sea_orm(has_many = "super::debt::Entity")]
+    Debt,
 }
 
 impl Related<super::group_member::Entity> for Entity {
@@ -24,13 +28,15 @@ impl Related<super::group_member::Entity> for Entity {
     }
 }
 
-impl Related<super::group::Entity> for Entity {
+impl Related<super::transaction::Entity> for Entity {
     fn to() -> RelationDef {
-        super::group_member::Relation::Group.def()
+        Relation::Transaction.def()
     }
+}
 
-    fn via() -> Option<RelationDef> {
-        Some(super::group_member::Relation::User.def().rev())
+impl Related<super::debt::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Debt.def()
     }
 }
 

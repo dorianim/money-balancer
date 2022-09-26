@@ -1,12 +1,22 @@
-use crate::services::group::{Group, GroupMember, GroupService};
+use crate::services::group::{
+    Group, GroupMember, GroupService, Transaction, TransactionCreationError,
+};
 use crate::services::user::User;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::*;
+
 #[derive(Deserialize)]
 struct GroupCreationRequest {
     name: String,
+}
+
+#[derive(Deserialize)]
+struct TransactionCreationRequest {
+    debtor_ids: Vec<String>,
+    amount: u32,
+    description: String,
 }
 
 #[get("/")]
@@ -76,12 +86,38 @@ async fn create_group_member(
     Status::Ok
 }
 
+#[post("/<group_id>/transaction", data = "<transaction_creation_request>")]
+async fn create_group_tansaction(
+    group_id: String,
+    transaction_creation_request: Json<TransactionCreationRequest>,
+    group_service: &State<GroupService>,
+    user: User,
+) -> Result<Json<Transaction>, Status> {
+    match group_service
+        .create_transaction(
+            group_id,
+            user.id,
+            transaction_creation_request.debtor_ids.to_owned(),
+            transaction_creation_request.amount,
+            transaction_creation_request.description.to_owned(),
+        )
+        .await
+    {
+        Ok(t) => Ok(Json(t)),
+        Err(e) => match e {
+            TransactionCreationError::GroupNotFound => Err(Status::NotFound),
+            TransactionCreationError::DebtorNotInGroup => Err(Status::BadRequest),
+        },
+    }
+}
+
 pub fn routes() -> Vec<rocket::Route> {
     routes![
         get_all_groups,
         get_group,
         create_group,
         get_group_members,
-        create_group_member
+        create_group_member,
+        create_group_tansaction
     ]
 }
