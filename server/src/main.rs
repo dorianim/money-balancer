@@ -92,7 +92,7 @@ pub fn build_rocket(db: DatabaseConnection) -> Rocket<Build> {
     rocket::build()
         .manage(user_service)
         .manage(group_service)
-        .mount("/", routes![index])
-        .mount("/user", routes::user::routes())
-        .mount("/group", routes::group::routes())
+        .mount("/v1", routes![index])
+        .mount("/v1/user", routes::user::routes())
+        .mount("/v1/group", routes::group::routes())
 }
