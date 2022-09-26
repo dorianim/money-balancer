@@ -86,6 +86,21 @@ async fn create_group_member(
     Status::Ok
 }
 
+#[get("/<group_id>/transaction")]
+async fn get_group_transactions(
+    group_id: String,
+    group_service: &State<GroupService>,
+    user: User,
+) -> Result<Json<Vec<Transaction>>, Status> {
+    match group_service
+        .get_transactions_of_group_of_user(group_id, user.id)
+        .await
+    {
+        Some(t) => Ok(Json(t)),
+        None => Err(Status::NotFound),
+    }
+}
+
 #[post("/<group_id>/transaction", data = "<transaction_creation_request>")]
 async fn create_group_tansaction(
     group_id: String,
@@ -118,6 +133,7 @@ pub fn routes() -> Vec<rocket::Route> {
         create_group,
         get_group_members,
         create_group_member,
+        get_group_transactions,
         create_group_tansaction
     ]
 }

@@ -209,8 +209,43 @@ impl GroupService {
             .await)
     }
 
+    pub async fn get_transactions_of_group_of_user(
+        &self,
+        group_id: String,
+        user_id: String,
+    ) -> Option<Vec<Transaction>> {
+        if !self
+            ._is_user_member_of_group(group_id.to_owned(), user_id)
+            .await
+        {
+            return None;
+        }
+
+        Some(
+            self._get_tansactions_help(
+                model::transaction::Entity::find()
+                    .filter(model::transaction::Column::GroupId.eq(group_id)),
+            )
+            .await,
+        )
+    }
+
     async fn _get_transaction_by_id(&self, transaction_id: String) -> Option<Transaction> {
-        match model::transaction::Entity::find_by_id(transaction_id)
+        match self
+            ._get_tansactions_help(model::transaction::Entity::find_by_id(transaction_id))
+            .await
+            .first()
+        {
+            Some(t) => Some(t.clone()),
+            None => None,
+        }
+    }
+
+    async fn _get_tansactions_help(
+        &self,
+        select: Select<model::transaction::Entity>,
+    ) -> Vec<Transaction> {
+        select
             .find_with_related(model::debt::Entity)
             .all(self.db.as_ref())
             .await
@@ -231,11 +266,6 @@ impl GroupService {
                     .collect(),
             })
             .collect::<Vec<Transaction>>()
-            .first()
-        {
-            Some(t) => Some(t.clone()),
-            None => None,
-        }
     }
 
     async fn _create_transaction(
