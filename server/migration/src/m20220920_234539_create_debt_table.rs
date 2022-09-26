@@ -16,26 +16,15 @@ impl MigrationTrait for Migration {
                     .table(Debt::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(Debt::TransactionId).string().not_null())
-                    .col(ColumnDef::new(Debt::CreditorId).string().not_null())
                     .col(ColumnDef::new(Debt::DebtorId).string().not_null())
                     .col(ColumnDef::new(Debt::Amount).big_unsigned().not_null())
-                    .primary_key(
-                        Index::create()
-                            .col(Debt::TransactionId)
-                            .col(Debt::CreditorId)
-                            .col(Debt::DebtorId),
-                    )
+                    .col(ColumnDef::new(Debt::WasSplitUnequally).boolean().not_null())
+                    .primary_key(Index::create().col(Debt::TransactionId).col(Debt::DebtorId))
                     .foreign_key(
                         ForeignKey::create()
                             .from(Debt::Table, Debt::TransactionId)
                             .to(Transaction::Table, Transaction::Id)
                             .on_delete(ForeignKeyAction::Cascade),
-                    )
-                    .foreign_key(
-                        ForeignKey::create()
-                            .from(Debt::Table, Debt::CreditorId)
-                            .to(User::Table, User::Id)
-                            .on_delete(ForeignKeyAction::Restrict),
                     )
                     .foreign_key(
                         ForeignKey::create()
@@ -60,7 +49,7 @@ impl MigrationTrait for Migration {
 enum Debt {
     Table,
     TransactionId,
-    CreditorId,
     DebtorId,
     Amount,
+    WasSplitUnequally,
 }

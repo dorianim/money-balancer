@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
 
-use crate::m20220912_000002_create_group_table::Group;
+use crate::{m20220912_000001_create_user_table::User, m20220912_000002_create_group_table::Group};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -19,12 +19,19 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Transaction::GroupId).string().not_null())
+                    .col(ColumnDef::new(Transaction::CreditorId).string().not_null())
                     .col(ColumnDef::new(Transaction::Description).string().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .from(Transaction::Table, Transaction::GroupId)
                             .to(Group::Table, Group::Id)
                             .on_delete(ForeignKeyAction::Cascade),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(Transaction::Table, Transaction::CreditorId)
+                            .to(User::Table, User::Id)
+                            .on_delete(ForeignKeyAction::Restrict),
                     )
                     .to_owned(),
             )
@@ -44,5 +51,6 @@ pub enum Transaction {
     Table,
     Id,
     GroupId,
+    CreditorId,
     Description,
 }
