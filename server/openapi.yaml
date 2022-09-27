@@ -1,16 +1,16 @@
 openapi: 3.0.1
 info:
-  title: Money-balancer API
+  title: Money-groupr API
   description: |-
-    API of money-balancer
+    API of money-groupr
   version: 1.0.0
 servers:
-  - url: /
+  - url: /v1
 tags:
   - name: user
     description: User
-  - name: balance
-    description: Balance
+  - name: group
+    description: Group
 
 paths:
   /user:
@@ -72,90 +72,120 @@ paths:
                   token:
                     type: string
 
-  /balance:
+  /group:
     post:
       tags:
-        - balance
-      summary: create a balance
-      operationId: createBalance
+        - group
+      summary: create a group
+      operationId: createGroup
       requestBody:
-        description: detailed information about the balance
+        description: detailed information about the group
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BalanceCreationRequest"
+              $ref: "#/components/schemas/GroupCreationRequest"
       security:
         - bearerAuth: []
       responses:
         200:
-          description: detailed information about the new balance
+          description: detailed information about the new group
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Balance"
+                $ref: "#/components/schemas/Group"
         403:
-          description: the user does not have access to the balance, but they can join the balance
-
-  /balance/{balanceId}:
+          description: the user does not have access to the group, but they can join the group
+  /group/{groupId}:
     get:
       tags:
-        - balance
-      summary: get detailed information about a balance
-      operationId: getBalance
+        - group
+      summary: get detailed information about a group
+      operationId: getGroup
       parameters:
-        - in: path
-          name: balanceId
-          schema:
-            type: string
-            format: balanceId
-          required: true
-          description: id of the balance
+        - $ref: "#/components/parameters/groupId"
       security:
         - bearerAuth: []
       responses:
         200:
-          description: detailed information about the balance
+          description: detailed information about the group
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Balance"
+                $ref: "#/components/schemas/Group"
 
     post:
       tags:
-        - balance
-      summary: join a balance
-      operationId: joinBalance
+        - group
+      summary: join a group
+      operationId: joinGroup
       parameters:
-        - in: path
-          name: balanceId
-          schema:
-            type: string
-            format: balanceId
-          required: true
-          description: id of the balance
+        - $ref: "#/components/parameters/groupId"
       security:
         - bearerAuth: []
       responses:
         200:
-          description: detailed information about the updated balance
+          description: detailed information about the updated group
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Balance"
+                $ref: "#/components/schemas/Group"
+  /group/{groupId}/member:
+    get:
+      tags:
+        - group
+      summary: get all members of a group
+      operationId: getGroupMembers
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: all members of the group
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupMember"
 
-  /balance/{balanceId}/purchase:
     post:
       tags:
-        - balance
-      summary: create a pruchase in a balance
+        - group
+      summary: create a group member (join a group)
+      operationId: createGroupMember
       parameters:
-        - in: path
-          name: balanceId
-          schema:
-            type: string
-            format: balanceId
-          required: true
-          description: id of the balance
+        - $ref: "#/components/parameters/groupId"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: the member was created
+  /group/{groupId}/transaction:
+    get:
+      tags:
+        - group
+      summary: get all transactions of a group
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: detailed information about all transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+    post:
+      tags:
+        - group
+      summary: create a transaction in a group
+      parameters:
+        - $ref: "#/components/parameters/groupId"
       security:
         - bearerAuth: []
       requestBody:
@@ -163,42 +193,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PurchaseCreationRequest"
+              $ref: "#/components/schemas/TransactionCreationRequest"
       responses:
         200:
-          description: detailed information about the updated balance
+          description: detailed information about the updated group
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Balance"
+                $ref: "#/components/schemas/Transaction"
 
 components:
   schemas:
     User:
-      type: object
-      properties:
-        id:
-          type: string
-          format: userId
-          example: f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670
-        username:
-          type: string
-        nickname:
-          type: string
-        balances:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: balanceId
-                example: 55f2eff62417ee43432fb78763e3405f42e10e56c744601bc2d27c8de7ef91bb
-              name:
-                type: string
-                example: Some Balance
-
-    PublicUser:
       type: object
       properties:
         id:
@@ -230,104 +236,96 @@ components:
           type: string
       required: [username, password]
 
-    Purchase:
-      type: object
-      properties:
-        timestamp:
-          type: number
-          format: unix timetamp
-          example: 1662533034
-        amount:
-          type: number
-          format: unsigned long
-          description: the amount of money purchased
-          example: 20
-        purchaser:
-          type: string
-          format: userId
-          description: id of the user who purchased
-          example: 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
-        consumers:
-          type: array
-          items:
-            type: string
-            format: userId
-          description: ids of the user who use the purchased good
-          example:
-            - f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670
-            - 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
-        description:
-          type: string
-          example: "Bread"
-
-    PurchaseCreationRequest:
-      type: object
-      properties:
-        amount:
-          type: number
-          format: unsigned long
-          description: the amount of money purchased
-          example: 20
-        consumers:
-          type: array
-          items:
-            type: string
-            format: userId
-          description: ids of the user who use the purchased good
-          example:
-            - f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670
-            - 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
-        description:
-          type: string
-          example: "Bread"
-
-    Balance:
+    Group:
       type: object
       properties:
         id:
           type: string
-          example: 55f2eff62417ee43432fb78763e3405f42e10e56c744601bc2d27c8de7ef91bb
+          format: uuid
         name:
           type: string
-          example: Some Balance
-        owner:
-          type: string
-          format: userId
-          description: id of the user who owns the balance
-          example: 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
-        userBalances:
-          type: object
-          additionalProperties:
-            type: number
-            format: unsigned long
-            description: The key consists of two userIds concatenated with a colon (:), where the first id is the alphabetically smaller one. The value is the balance of the first user with the second one. In this example, alice ows bob 10, because Bob purchased an item for 20 that is used by alice and bob.
-          example:
-            "1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2:f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670": 10
+          example: Some Group
 
-        users:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/PublicUser"
-          example:
-            f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670:
-              id: f87165e305b0f7c4824d3806434f9d0909610a25641ab8773cf92a48c9d77670
-              username: alice
-              nickname: Alice
-            1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2:
-              id: 1a1707bb54e5fb4deddd19f07adcb4f1e022ca7879e3c8348da8d4fa496ae8e2
-              username: bob
-              nickname: Bob
-
-        purchases:
+        members:
           type: array
           items:
-            $ref: "#/components/schemas/Purchase"
+            $ref: "#/components/schemas/GroupMember"
 
-    BalanceCreationRequest:
+    GroupCreationRequest:
       type: object
       properties:
         name:
           type: string
+
+    GroupMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nickname:
+          type: string
+        is_owner:
+          type: boolean
+
+    Debt:
+      type: object
+      properties:
+        debtor_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: unsigned
+        was_split_unequally:
+          type: boolean
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        group_id:
+          type: string
+          format: uuid
+        creditor_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        debts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Debt"
+
+    TransactionCreationRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: unsigned long
+          description: the amount of money purchased
+          example: 20
+        debtor_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ids of the users who use the purchased good
+        description:
+          type: string
+          example: "Bread"
+
+  parameters:
+    groupId:
+      in: path
+      name: groupId
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: id of the group
 
   securitySchemes:
     bearerAuth: # arbitrary name for the security scheme
