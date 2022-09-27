@@ -6,4 +6,10 @@ Have you ever been on a group trip and lost track of who payed for what and who 
 
 # Usage
 
-I currently have a deployment on Cloudflare, you can use it here: [https://money-balancer.dorian.im](https://money-balancer.dorian.im).
+`cargo run`
+
+# How debts are split up:
+
+- amount / debtors
+- the potential rest is assigned to people who have to overpay
+- who has to overpay is determined by how often they have overpaid in the past in this specific group
