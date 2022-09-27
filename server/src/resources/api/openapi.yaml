@@ -5,7 +5,7 @@ info:
     API of money-groupr
   version: 1.0.0
 servers:
-  - url: /api/v1
+  - url: /v1
 tags:
   - name: user
     description: User
@@ -73,6 +73,23 @@ paths:
                     type: string
 
   /group:
+    get:
+      tags:
+        - group
+      summary: get all joined groups
+      operationId: getGroups
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: detailed information about all joined groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+
     post:
       tags:
         - group

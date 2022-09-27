@@ -6,15 +6,22 @@ mod services;
 
 use migration;
 use rocket::*;
+
+use rocket::http::ContentType;
+use rust_embed::RustEmbed;
 use sea_orm::*;
 use sea_orm_migration::prelude::*;
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 // Change this according to your database implementation,
 // or supply it as an environment variable.
 // the database URL string follows the following format:
 // "protocol://username:password@host:port/database"
 const DATABASE_URL: &str = "sqlite:./money-balancer.sqlite?mode=rwc";
+
+#[derive(RustEmbed)]
+#[folder = "src/resources/api"]
+struct SwaggerAssets;
 
 async fn set_up_db(url: &str) -> Result<DatabaseConnection, DbErr> {
     let db = Database::connect(url).await?;
@@ -50,8 +57,19 @@ async fn set_up_db(url: &str) -> Result<DatabaseConnection, DbErr> {
 }
 
 #[get("/")]
-async fn index() -> &'static str {
-    "Hello, balances!"
+async fn swagger() -> (ContentType, Cow<'static, [u8]>) {
+    (
+        ContentType::HTML,
+        SwaggerAssets::get("swagger.html").unwrap().data,
+    )
+}
+
+#[get("/openapi.yaml")]
+async fn openapi() -> (ContentType, Cow<'static, [u8]>) {
+    (
+        ContentType::Text,
+        SwaggerAssets::get("openapi.yaml").unwrap().data,
+    )
 }
 
 #[launch] // The "main" function of the program
@@ -92,7 +110,7 @@ pub fn build_rocket(db: DatabaseConnection) -> Rocket<Build> {
     rocket::build()
         .manage(user_service)
         .manage(group_service)
-        .mount("/v1", routes![index])
-        .mount("/v1/user", routes::user::routes())
-        .mount("/v1/group", routes::group::routes())
+        .mount("/api/v1", routes![swagger, openapi])
+        .mount("/api/v1/user", routes::user::routes())
+        .mount("/api/v1/group", routes::group::routes())
 }
