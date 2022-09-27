@@ -51,6 +51,9 @@ async fn set_up_db(url: &str) -> Result<DatabaseConnection, DbErr> {
     Ok(db)
 }
 
+#[options("/<_..>")]
+fn options() {}
+
 #[launch] // The "main" function of the program
 async fn rocket() -> _ {
     let db = match set_up_db(DATABASE_URL).await {
@@ -90,6 +93,7 @@ pub fn build_rocket(db: DatabaseConnection) -> Rocket<Build> {
         .attach(fairings::cors::CORS)
         .manage(user_service)
         .manage(group_service)
+        .mount("/", routes![options])
         .mount("/", routes::client::routes())
         .mount("/api/v1", routes::swagger::routes())
         .mount("/api/v1/user", routes::user::routes())
