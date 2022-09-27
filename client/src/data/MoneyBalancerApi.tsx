@@ -1,7 +1,10 @@
 import { ErrorData } from './Context';
 import { Balance, User } from './Types';
 
-export const URL = 'https://money-balancer.itsblue.workers.dev';
+export const URL =
+  !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
+    ? 'http://localhost:8000/api/v1'
+    : '/api/v1';
 
 interface ReducedContextType {
   token: string;
@@ -26,6 +29,10 @@ export class MoneyBalancerApi {
   }
 
   private async _fetch(path: string, init?: RequestInit | undefined) {
+    const newHeaders = new Headers(init?.headers);
+    newHeaders.set('Accept', 'application/json');
+    init = { ...init, headers: newHeaders };
+
     try {
       return await fetch(`${URL}${path}`, init);
     } catch (e) {
@@ -49,7 +56,7 @@ export class MoneyBalancerApi {
 
     const data = await r.json();
     this._context.setError({
-      message: data.message,
+      message: data.error.description,
       severity: 'error',
       open: true,
     });

@@ -1,4 +1,5 @@
 // main.rs
+mod fairings;
 mod guards;
 mod model;
 mod routes;
@@ -86,6 +87,7 @@ pub fn build_rocket(db: DatabaseConnection) -> Rocket<Build> {
     let group_service = services::group::GroupService::new(db);
 
     rocket::build()
+        .attach(fairings::cors::CORS)
         .manage(user_service)
         .manage(group_service)
         .mount("/", routes::client::routes())
