@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 build = "build.rs"
 
+[[bin]]
+name = "money-balancer"
+path = "src/main.rs"
+
 [dependencies]
 futures = "0.3.21"
 sea-orm = { version = "^0.9.0", features = [ "sqlx-sqlite", "runtime-async-std-native-tls", "macros" ] }

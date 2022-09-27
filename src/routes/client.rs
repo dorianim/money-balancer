@@ -8,11 +8,12 @@ use std::ffi::OsStr;
 
 #[derive(RustEmbed)]
 #[folder = "client/build"]
+#[prefix = "client/"]
 struct ClientAssets;
 
 fn get_client_file(file: PathBuf) -> Option<(ContentType, Cow<'static, [u8]>)> {
     let filename = file.display().to_string();
-    let asset = ClientAssets::get(&filename)?;
+    let asset = ClientAssets::get(&("client/".to_owned() + &filename))?;
     let content_type = file
         .extension()
         .and_then(OsStr::to_str)
