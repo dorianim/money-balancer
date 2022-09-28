@@ -5,7 +5,7 @@ info:
     API of money-groupr
   version: 1.0.0
 servers:
-  - url: /v1
+  - url: /api/v1
 tags:
   - name: user
     description: User

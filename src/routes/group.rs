@@ -1,5 +1,5 @@
 use crate::services::group::{
-    Group, GroupMember, GroupService, Transaction, TransactionCreationError,
+    Debt, Group, GroupMember, GroupService, Transaction, TransactionCreationError,
 };
 use crate::services::user::User;
 use rocket::http::Status;
@@ -24,7 +24,6 @@ async fn get_all_groups(
     group_service: &State<GroupService>,
     user: User,
 ) -> Result<Json<Vec<Group>>, Status> {
-    let group_service = group_service as &GroupService;
     Ok(Json(group_service.get_groups_of_user(user.id).await))
 }
 
@@ -46,8 +45,6 @@ async fn create_group(
     user: User,
     group_creation_request: Json<GroupCreationRequest>,
 ) -> Json<Group> {
-    let group_service = group_service as &GroupService;
-
     Json(
         group_service
             .create_group(group_creation_request.name.to_owned(), user)
@@ -126,6 +123,21 @@ async fn create_group_tansaction(
     }
 }
 
+#[get("/<group_id>/debt")]
+async fn get_group_debts(
+    group_id: String,
+    group_service: &State<GroupService>,
+    user: User,
+) -> Result<Json<Vec<Debt>>, Status> {
+    match group_service
+        .get_debts_of_user_in_group(&group_id, &user.id)
+        .await
+    {
+        Some(d) => Ok(Json(d)),
+        None => Err(Status::NotFound),
+    }
+}
+
 pub fn routes() -> Vec<rocket::Route> {
     routes![
         get_all_groups,
@@ -134,6 +146,7 @@ pub fn routes() -> Vec<rocket::Route> {
         get_group_members,
         create_group_member,
         get_group_transactions,
-        create_group_tansaction
+        create_group_tansaction,
+        get_group_debts
     ]
 }

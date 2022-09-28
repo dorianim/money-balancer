@@ -3,7 +3,7 @@ use ::serde::{Deserialize, Serialize};
 use futures::future;
 use sea_orm::*;
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use super::user::User;
 
@@ -51,6 +51,18 @@ pub struct GroupService {
 struct CountOfUnequallyChargedDebts {
     debtor_id: String,
     count_of_unequally_charged_debts: u32,
+}
+
+#[derive(FromQueryResult)]
+struct DebtWithUserInGroup {
+    creditor_id: String,
+    debt: i32,
+}
+
+#[derive(FromQueryResult)]
+struct CreditWithUserInGroup {
+    debtor_id: String,
+    credit: i32,
 }
 
 impl Clone for Debt {
@@ -163,10 +175,7 @@ impl GroupService {
         group_id: String,
         user_id: String,
     ) -> Option<Vec<GroupMember>> {
-        if !self
-            ._is_user_member_of_group(group_id.to_owned(), user_id)
-            .await
-        {
+        if !self._is_user_member_of_group(&group_id, &user_id).await {
             return None;
         }
 
@@ -214,10 +223,7 @@ impl GroupService {
         group_id: String,
         user_id: String,
     ) -> Option<Vec<Transaction>> {
-        if !self
-            ._is_user_member_of_group(group_id.to_owned(), user_id)
-            .await
-        {
+        if !self._is_user_member_of_group(&group_id, &user_id).await {
             return None;
         }
 
@@ -227,6 +233,61 @@ impl GroupService {
                     .filter(model::transaction::Column::GroupId.eq(group_id)),
             )
             .await,
+        )
+    }
+
+    pub async fn get_debts_of_user_in_group(
+        &self,
+        group_id: &str,
+        user_id: &str,
+    ) -> Option<Vec<Debt>> {
+        if !self._is_user_member_of_group(group_id, user_id).await {
+            return None;
+        }
+
+        let debts_of_user = model::debt::Entity::find()
+            .find_also_related(model::transaction::Entity)
+            .filter(model::transaction::Column::GroupId.eq(group_id))
+            .filter(model::debt::Column::DebtorId.eq(user_id))
+            .group_by(model::transaction::Column::CreditorId)
+            .column_as(model::debt::Column::Amount.sum(), "B_debt")
+            .into_model::<model::debt::Model, DebtWithUserInGroup>()
+            .all(self.db.as_ref())
+            .await
+            .expect("error querying debt of user in group")
+            .into_iter()
+            .map(|(_, debt)| {
+                let debt = debt.unwrap();
+                (debt.creditor_id, debt.debt)
+            })
+            .collect::<HashMap<String, i32>>();
+
+        let credits_of_user = model::debt::Entity::find()
+            .find_also_related(model::transaction::Entity)
+            .filter(model::transaction::Column::GroupId.eq(group_id))
+            .filter(model::transaction::Column::CreditorId.eq(user_id))
+            .group_by(model::debt::Column::DebtorId)
+            .column_as(model::debt::Column::Amount.sum(), "A_credit")
+            .into_model::<CreditWithUserInGroup, model::transaction::Model>()
+            .all(self.db.as_ref())
+            .await
+            .expect("error querying credit of user in group")
+            .into_iter()
+            .map(|(credit, _)| (credit.debtor_id, credit.credit))
+            .collect::<HashMap<String, i32>>();
+
+        Some(
+            self._get_group_members(&group_id)
+                .await
+                .into_iter()
+                .filter(|member| member.id != user_id)
+                .map(|member| Debt {
+                    debtor_id: member.id.to_owned(),
+                    amount: credits_of_user.get(&member.id).unwrap_or(&0)
+                        - debts_of_user.get(&member.id).unwrap_or(&0),
+                    was_split_unequally: false,
+                })
+                .collect::<Vec<Debt>>(),
         )
     }
 
@@ -429,7 +490,7 @@ impl GroupService {
             .collect::<Vec<GroupMember>>()
     }
 
-    async fn _is_user_member_of_group(&self, group_id: String, user_id: String) -> bool {
+    async fn _is_user_member_of_group(&self, group_id: &str, user_id: &str) -> bool {
         let res = model::group_member::Entity::find()
             .filter(model::group_member::Column::GroupId.eq(group_id))
             .filter(model::group_member::Column::UserId.eq(user_id))
