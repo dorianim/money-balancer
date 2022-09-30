@@ -26,6 +26,8 @@ Using `docker`:
 docker run -p8000:8000 -e JWT_SECRET=some_super_secret_secret -v $(pwd)/data:/data money-balancer
 ```
 
+You can then access money-balancer on [`http://localhost:8000`](http://localhost:8000). The API documentation can be found at [`http://localhost:8000/api/v1`](http://localhost:8000/api/v1).
+
 # How debts are split up:
 
 - amount / debtors
