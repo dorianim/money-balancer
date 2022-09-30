@@ -9,6 +9,7 @@ pub struct Model {
     pub id: String,
     pub group_id: String,
     pub creditor_id: String,
+    pub timestamp: i32,
     pub description: String,
 }
 

@@ -20,6 +20,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Transaction::GroupId).string().not_null())
                     .col(ColumnDef::new(Transaction::CreditorId).string().not_null())
+                    .col(ColumnDef::new(Transaction::Timestamp).integer().not_null())
                     .col(ColumnDef::new(Transaction::Description).string().not_null())
                     .foreign_key(
                         ForeignKey::create()
@@ -52,5 +53,6 @@ pub enum Transaction {
     Id,
     GroupId,
     CreditorId,
+    Timestamp,
     Description,
 }

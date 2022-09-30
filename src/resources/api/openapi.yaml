@@ -328,6 +328,8 @@ components:
         creditor_id:
           type: string
           format: uuid
+        timestamp:
+          type: number
         description:
           type: string
         debts:

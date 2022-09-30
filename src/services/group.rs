@@ -2,7 +2,7 @@ use crate::model::{self};
 use ::serde::{Deserialize, Serialize};
 use futures::future;
 use sea_orm::*;
-
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{collections::HashMap, sync::Arc};
 
 use super::user::User;
@@ -32,6 +32,7 @@ pub struct Debt {
 pub struct Transaction {
     id: String,
     group_id: String,
+    timestamp: u32,
     description: String,
     creditor_id: String,
     debts: Vec<Debt>,
@@ -80,6 +81,7 @@ impl Clone for Transaction {
         Transaction {
             id: self.id.clone(),
             group_id: self.group_id.clone(),
+            timestamp: self.timestamp.clone(),
             description: self.description.clone(),
             creditor_id: self.creditor_id.clone(),
             debts: self.debts.clone(),
@@ -308,6 +310,7 @@ impl GroupService {
     ) -> Vec<Transaction> {
         select
             .find_with_related(model::debt::Entity)
+            .order_by(model::transaction::Column::Timestamp, Order::Desc)
             .all(self.db.as_ref())
             .await
             .expect("error querying transaction")
@@ -315,6 +318,7 @@ impl GroupService {
             .map(|(transaction, debt)| Transaction {
                 id: transaction.id,
                 group_id: transaction.group_id,
+                timestamp: transaction.timestamp as u32,
                 description: transaction.description,
                 creditor_id: transaction.creditor_id,
                 debts: debt
@@ -341,6 +345,14 @@ impl GroupService {
             id: ActiveValue::Set(new_transaction_id.to_owned()),
             group_id: ActiveValue::Set(group_id.to_owned()),
             creditor_id: ActiveValue::Set(creditor_id.to_owned()),
+            timestamp: ActiveValue::Set(
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs()
+                    .try_into()
+                    .unwrap(),
+            ),
             description: ActiveValue::Set(description.to_owned()),
         };
 
