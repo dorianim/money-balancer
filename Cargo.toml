@@ -1,0 +1,24 @@
+[package]
+name = "money-balancer"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[[bin]]
+name = "money-balancer"
+path = "src/main.rs"
+
+[dependencies]
+futures = "0.3.21"
+sea-orm = { version = "^0.9.0", features = [ "sqlx-sqlite", "runtime-async-std-native-tls", "macros" ] }
+sea-orm-migration = "^0.9.0"
+rocket = { version = "^0.5.0-rc.2", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+uuid = { version = "1.1.2", features = [ "v4", "fast-rng", "macro-diagnostics"]}
+pwhash = "1"
+jsonwebtoken = "8"
+serial_test = "0.9.0"
+rust-embed = "6.4.1"
+
+[dependencies.migration]
+path = "./migration"

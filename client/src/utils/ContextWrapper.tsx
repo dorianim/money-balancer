@@ -28,7 +28,7 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
 
   // load old values from localstorage
   const storedContextJSON = localStorage.getItem(
-    'de.itsblue.money-balancer.context',
+    'de.itsblue.money-groupr.context',
   );
   if (storedContextJSON !== null) {
     storedContext = {
@@ -37,7 +37,7 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
     };
   }
 
-  const [title, setTitle] = useState('Money Balancer');
+  const [title, setTitle] = useState('Money Groupr');
   const [token, setToken] = useState(storedContext.token);
   const [user, setUser] = useState(storedContext.user);
   const [error, setError] = useState<ErrorData>({
@@ -54,7 +54,7 @@ export default function ContextWrapper(props: { children: JSX.Element }) {
 
   useEffect(() => {
     localStorage.setItem(
-      'de.itsblue.money-balancer.context',
+      'de.itsblue.money-groupr.context',
       JSON.stringify({
         token: token,
         loginRedirectUrl: loginRedirectUrl,

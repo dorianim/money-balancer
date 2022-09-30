@@ -1,7 +1,10 @@
 import { ErrorData } from './Context';
-import { Balance, User } from './Types';
+import { Debt, Group, Transaction, User } from './Types';
 
-export const URL = 'https://money-balancer.itsblue.workers.dev';
+export const URL =
+  !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
+    ? 'http://localhost:8000/api/v1'
+    : '/api/v1';
 
 interface ReducedContextType {
   token: string;
@@ -26,6 +29,10 @@ export class MoneyBalancerApi {
   }
 
   private async _fetch(path: string, init?: RequestInit | undefined) {
+    const newHeaders = new Headers(init?.headers);
+    newHeaders.set('Accept', 'application/json');
+    init = { ...init, headers: newHeaders };
+
     try {
       return await fetch(`${URL}${path}`, init);
     } catch (e) {
@@ -49,7 +56,7 @@ export class MoneyBalancerApi {
 
     const data = await r.json();
     this._context.setError({
-      message: data.message,
+      message: data.error.description,
       severity: 'error',
       open: true,
     });
@@ -125,8 +132,8 @@ export class MoneyBalancerApi {
     return json;
   }
 
-  async createBalance(name: string): Promise<Balance | undefined> {
-    const r = await this._authorizedFetch('/balance', {
+  async createGroup(name: string): Promise<Group | undefined> {
+    const r = await this._authorizedFetch('/group', {
       method: 'POST',
       body: JSON.stringify({
         name: name,
@@ -141,8 +148,8 @@ export class MoneyBalancerApi {
     return json;
   }
 
-  async getBalance(id: string): Promise<Balance | 'unauthorized' | undefined> {
-    const r = await this._authorizedFetch('/balance/' + id, {
+  async getGroup(id: string): Promise<Group | 'unauthorized' | undefined> {
+    const r = await this._authorizedFetch('/group/' + id, {
       method: 'GET',
     });
 
@@ -157,9 +164,31 @@ export class MoneyBalancerApi {
     return json;
   }
 
-  async joinBalance(id: string): Promise<Balance | undefined> {
-    const r = await this._authorizedFetch(`/balance/${id}`, {
+  async joinGroup(id: string): Promise<boolean> {
+    const r = await this._authorizedFetch(`/group/${id}/member`, {
       method: 'POST',
+    });
+
+    if (!r || (await this._error(r, 200))) {
+      return false;
+    }
+
+    return true;
+  }
+
+  async createTransaction(
+    groupId: string,
+    amount: number,
+    description: string,
+    debtorIds: string[],
+  ): Promise<Group | undefined> {
+    const r = await this._authorizedFetch(`/group/${groupId}/transaction`, {
+      method: 'POST',
+      body: JSON.stringify({
+        amount: amount,
+        description: description,
+        debtor_ids: debtorIds,
+      }),
     });
 
     if (!r || (await this._error(r, 200))) {
@@ -170,19 +199,24 @@ export class MoneyBalancerApi {
     return json;
   }
 
-  async createPurchase(
-    balanceId: string,
-    amount: number,
-    description: string,
-    consumers: string[],
-  ): Promise<Balance | undefined> {
-    const r = await this._authorizedFetch(`/balance/${balanceId}/purchase`, {
-      method: 'POST',
-      body: JSON.stringify({
-        amount: amount,
-        description: description,
-        consumers: consumers,
-      }),
+  async getTransactionsOfGroup(
+    groupId: string,
+  ): Promise<Transaction[] | undefined> {
+    const r = await this._authorizedFetch(`/group/${groupId}/transaction`, {
+      method: 'GET',
+    });
+
+    if (!r || (await this._error(r, 200))) {
+      return undefined;
+    }
+
+    const json = await r.json();
+    return json;
+  }
+
+  async getDebtsOfGroup(groupId: string): Promise<Debt[] | undefined> {
+    const r = await this._authorizedFetch(`/group/${groupId}/debt`, {
+      method: 'GET',
     });
 
     if (!r || (await this._error(r, 200))) {

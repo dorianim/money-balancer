@@ -1,0 +1,5 @@
+.vscode
+client/node_modules
+client/build
+target
+migration/target

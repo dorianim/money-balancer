@@ -1,43 +1,33 @@
-interface Balances {
-  [balanceId: string]: {
-    name: string;
-  };
-}
-
-export interface PublicUser {
-  id: string;
-  username: string;
-  nickname: string;
-}
-
 export interface User {
   id: string;
   username: string;
   nickname: string;
-  balances: Balances;
+  groups: Group[];
 }
 
-export interface Purchase {
-  timestamp: number;
-  amount: number;
-  purchaser: string;
-  consumers: string[];
-  description: string;
-}
-
-export interface Users {
-  [id: string]: PublicUser;
-}
-
-export interface UserBalances {
-  [id: string]: number;
-}
-
-export interface Balance {
+export interface Group {
   id: string;
   name: string;
-  owner: string;
-  userBalances: UserBalances;
-  users: Users;
-  purchases: Purchase[];
+  members: GroupMember[];
+}
+
+export interface GroupMember {
+  id: string;
+  nickname: string;
+  is_owner: boolean;
+}
+
+export interface Transaction {
+  id: string;
+  group_id: string;
+  creditor_id: string;
+  timestamp: number;
+  description: string;
+  debts: Debt[];
+}
+
+export interface Debt {
+  debtor_id: string;
+  amount: number;
+  was_split_unequally: boolean;
 }
