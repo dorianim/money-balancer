@@ -40,7 +40,7 @@ export default function LoginPage() {
       return;
     }
 
-    setTitle('My balances');
+    setTitle('My groups');
     setGoBackToUrl(undefined);
     loadUserData();
   }, []);
@@ -61,7 +61,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FieldValues) => {
     setLoading(true);
-    const r = await api.createBalance(data.name);
+    const r = await api.createGroup(data.name);
     setLoading(false);
 
     if (!r) {
@@ -84,20 +84,20 @@ export default function LoginPage() {
 
       <Grid spacing={2} container>
         {!loading
-          ? Object.keys(user?.balances || {}).map(balanceId => (
-              <Grid xs={12} key={`balance-item-${balanceId}`} item>
+          ? user?.groups.map(group => (
+              <Grid xs={12} key={`group-item-${group.id}`} item>
                 <Button
-                  onClick={() => navigate(`/balance/${balanceId}`)}
+                  onClick={() => navigate(`/group/${group.id}`)}
                   variant='contained'
                   endIcon={<ChevronRight />}
                   fullWidth
                 >
-                  {user?.balances[balanceId].name}
+                  {group.name}
                 </Button>
               </Grid>
             ))
           : new Array(2).fill(0).map((_, i) => (
-              <Grid item xs={12} key={`current-balance-skeleton-${i}`}>
+              <Grid item xs={12} key={`current-group-skeleton-${i}`}>
                 <Skeleton variant='rounded' width={'100%'} height={36.5} />
               </Grid>
             ))}
@@ -109,20 +109,20 @@ export default function LoginPage() {
             disabled={loading}
           >
             <Add sx={{ marginRight: 1 }}></Add>
-            New balance
+            New group
           </Button>
         </Grid>
       </Grid>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>New balance</DialogTitle>
+        <DialogTitle>New group</DialogTitle>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent>
             <CollapsableAlert sx={{ marginBottom: 2 }}></CollapsableAlert>
 
             <DialogContentText>
-              To create a new balance, please enter a name for it. You can then
+              To create a new group, please enter a name for it. You can then
               invite users to join via a link.
             </DialogContentText>
             <TextField

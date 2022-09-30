@@ -25,15 +25,15 @@ import {
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Context } from '../data/Context';
-import { Balance, UserBalances } from '../data/Types';
+import { Debt, GroupMember, Transaction } from '../data/Types';
 import CollapsableAlert from '../components/CollapsableAlert';
 import { FieldValues, useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
-import BalancesWithOtherUsers from '../components/BalancesWithOtherUsers';
-import PurchaseHistory from '../components/PurchaseHistory';
+import Debts from '../components/Debts';
+import TransactionHistory from '../components/TransactionHistory';
 
 export default function LoginPage() {
-  const { balanceId } = useParams();
+  const { groupId } = useParams();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,11 +45,12 @@ export default function LoginPage() {
   const { setTitle, setGoBackToUrl, user, setLoginRedirectUrl, api } =
     useContext(Context);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [balanceData, setBalanceData] = useState<Balance>();
-  const [balancesWithOtherUsers, setBalancesWithOtherUsers] =
-    useState<UserBalances>({});
+  const [groupMembers, setGroupMembers] =
+    useState<Record<string, GroupMember>>();
+  const [debts, setDebts] = useState<Debt[]>();
+  const [transactions, setTransactions] = useState<Transaction[]>();
   const [selectedConsumers, setSelectedConsumers] = useState<string[]>([]);
 
   useEffect(() => {
@@ -62,16 +63,16 @@ export default function LoginPage() {
     }
 
     setGoBackToUrl('/');
-    loadBalanceData();
-  }, [balanceId]);
+    loadGroupData();
+  }, [groupId]);
 
-  const loadBalanceData = async () => {
-    setLoading(true);
-    const r = await api.getBalance(balanceId ?? '');
-    setLoading(false);
+  const loadGroupData = async () => {
+    // first, load group data, as it is required for later
+    setGroupMembers(undefined);
+    const r = await api.getGroup(groupId ?? '');
 
     if (r === 'unauthorized') {
-      navigate(`/join-balance/${balanceId}`);
+      navigate(`/join-group/${groupId}`);
       return;
     }
     if (r === undefined) {
@@ -79,33 +80,50 @@ export default function LoginPage() {
       return;
     }
 
-    setBalanceData(r);
-    setBalancesWithOtherUsers(calculateBalancesWithOtherUsers(r));
+    setGroupMembers(
+      r.members.reduce(
+        (acc, member) => ({
+          ...acc,
+          [member.id]: member,
+        }),
+        {} as Record<string, GroupMember>,
+      ),
+    );
     setTitle(r.name);
+
+    // then, load debts and transactions in parallel
+    loadDebts();
+    loadTransactions();
   };
 
-  const calculateBalancesWithOtherUsers = (balance: Balance) => {
-    const tmpBalancesWithOtherUsers: UserBalances = {};
-    for (const otherUserId of Object.keys(balance?.users || {})) {
-      if (otherUserId === user?.id) continue;
+  const loadDebts = async () => {
+    setDebts(undefined);
+    const r = await api.getDebtsOfGroup(groupId ?? '');
 
-      const userBalanceKey = [user?.id, otherUserId].sort().join(':');
-      const userBalance = balance?.userBalances[userBalanceKey] || 0;
-
-      if ((user?.id || '') < otherUserId) {
-        tmpBalancesWithOtherUsers[otherUserId] = userBalance;
-      } else {
-        tmpBalancesWithOtherUsers[otherUserId] = -userBalance;
-      }
+    if (r === undefined) {
+      navigate('/');
+      return;
     }
 
-    return tmpBalancesWithOtherUsers;
+    setDebts(r);
+  };
+
+  const loadTransactions = async () => {
+    setTransactions(undefined);
+    const r = await api.getTransactionsOfGroup(groupId ?? '');
+
+    if (r === undefined) {
+      navigate('/');
+      return;
+    }
+
+    setTransactions(r);
   };
 
   const onSubmit = async (data: FieldValues) => {
     setLoading(true);
-    const r = await api.createPurchase(
-      balanceId ?? '',
+    const r = await api.createTransaction(
+      groupId ?? '',
       parseFloat(data.amount) * 100,
       data.description,
       selectedConsumers,
@@ -117,7 +135,7 @@ export default function LoginPage() {
     }
 
     setDialogOpen(false);
-    loadBalanceData();
+    loadGroupData();
   };
 
   const onConsumersChange = (e: SelectChangeEvent<string[]>) => {
@@ -135,18 +153,15 @@ export default function LoginPage() {
   return (
     <>
       <Typography variant='h5' sx={{ paddingBottom: 2 }}>
-        Your balances
+        Your debts
       </Typography>
 
-      {!loading ? (
-        <BalancesWithOtherUsers
-          users={balanceData?.users ?? {}}
-          balancesWithOtherUsers={balancesWithOtherUsers}
-        ></BalancesWithOtherUsers>
+      {debts && groupMembers ? (
+        <Debts groupMembersById={groupMembers} debts={debts}></Debts>
       ) : (
         <Grid container spacing={2}>
           {new Array(2).fill(0).map((_, i) => (
-            <Grid item xs='auto' key={`current-balance-skeleton-${i}`}>
+            <Grid item xs='auto' key={`current-group-skeleton-${i}`}>
               <Skeleton
                 variant='rounded'
                 width={120}
@@ -159,18 +174,18 @@ export default function LoginPage() {
       )}
 
       <Typography variant='h5' sx={{ paddingBottom: 2, paddingTop: 2 }}>
-        Purchase history
+        Transaction history
       </Typography>
 
-      {!loading ? (
-        <PurchaseHistory
-          purchases={(balanceData?.purchases ?? []).sort((a, b) => {
+      {transactions && groupMembers ? (
+        <TransactionHistory
+          transactions={transactions.sort((a, b) => {
             return b.timestamp - a.timestamp;
           })}
-          users={balanceData?.users ?? {}}
+          groupMembersById={groupMembers}
           currentUserId={user?.id ?? ''}
-          onCreateNewPurchase={() => setDialogOpen(true)}
-        ></PurchaseHistory>
+          onCreateNewTransaction={() => setDialogOpen(true)}
+        ></TransactionHistory>
       ) : (
         <Grid spacing={2} container>
           <Grid item xs={12}>
@@ -223,15 +238,15 @@ export default function LoginPage() {
       )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>New balance</DialogTitle>
+        <DialogTitle>New transaction</DialogTitle>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent>
             <CollapsableAlert sx={{ marginBottom: 2 }}></CollapsableAlert>
 
             <DialogContentText>
-              To create a new purchase, please enter the amount, who uses it and
-              a description for it.
+              To create a new transaction, please enter the amount, who uses it
+              and a description for it.
             </DialogContentText>
             <TextField
               label='Amount (in €)'
@@ -298,7 +313,7 @@ export default function LoginPage() {
                     {selected.map(value => (
                       <Chip
                         key={`dialog-consumer-chip-${value}`}
-                        label={balanceData?.users[value].nickname}
+                        label={groupMembers?.[value].nickname}
                       />
                     ))}
                   </Box>
@@ -312,7 +327,7 @@ export default function LoginPage() {
                   },
                 }}
               >
-                {Object.values(balanceData?.users || {}).map(user => (
+                {Object.values(groupMembers || {}).map(user => (
                   <MenuItem
                     key={`dialog-consumer-menu-item-${user.id}`}
                     value={user.id}

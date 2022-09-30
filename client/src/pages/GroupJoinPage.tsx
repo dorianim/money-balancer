@@ -4,8 +4,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import CollapsableAlert from '../components/CollapsableAlert';
 import { Context } from '../data/Context';
 
-export default function BalanceJoinPage() {
-  const { balanceId } = useParams();
+export default function GroupJoinPage() {
+  const { groupId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { api, setTitle, setGoBackToUrl, setLoginRedirectUrl } =
@@ -19,19 +19,19 @@ export default function BalanceJoinPage() {
       navigate('/login');
       return;
     }
-    setTitle('Join balance');
+    setTitle('Join group');
     setGoBackToUrl('/');
   });
 
-  const joinBalance = async () => {
+  const joinGroup = async () => {
     setLoading(true);
-    const r = await api.joinBalance(balanceId ?? '');
+    const r = await api.joinGroup(groupId ?? '');
     setLoading(false);
     if (!r) {
       return;
     }
 
-    navigate(`/balance/${balanceId}`);
+    navigate(`/group/${groupId}`);
   };
 
   if (!api.loggedIn()) {
@@ -43,10 +43,10 @@ export default function BalanceJoinPage() {
       <CollapsableAlert sx={{ marginBottom: 2 }}></CollapsableAlert>
 
       <Typography variant='h4' sx={{ marginBottom: 2 }}>
-        You have been invited to join a balance
+        You have been invited to join a group
       </Typography>
-      <Button variant='contained' onClick={joinBalance} disabled={loading}>
-        Join balance
+      <Button variant='contained' onClick={joinGroup} disabled={loading}>
+        Join group
       </Button>
 
       <Modal

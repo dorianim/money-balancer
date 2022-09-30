@@ -1,10 +1,10 @@
 import { Routes, Route, HashRouter } from 'react-router-dom';
 import Header from '../components/Header';
 import LoginPage from '../pages/LoginPage';
-import BalanceListPage from '../pages/BalanceListPage';
+import GroupListPage from '../pages/GroupListPage';
 import PageTemplate from './PageTemplate';
-import BalancePage from '../pages/BalancePage';
-import BalanceJoinPage from '../pages/BalanceJoinPage';
+import GroupPage from '../pages/GroupPage';
+import GroupJoinPage from '../pages/GroupJoinPage';
 import RegistrationPage from '../pages/RegistrationPage';
 
 /**
@@ -17,13 +17,13 @@ export default function Routing() {
       <Header />
       <PageTemplate>
         <Routes>
-          <Route path='/' element={<BalanceListPage />} />
+          <Route path='/' element={<GroupListPage />} />
           <Route path='/login' element={<LoginPage />}></Route>
           <Route path='/registration' element={<RegistrationPage />}></Route>
-          <Route path='/balance/:balanceId' element={<BalancePage />}></Route>
+          <Route path='/group/:groupId' element={<GroupPage />}></Route>
           <Route
-            path='/join-balance/:balanceId'
-            element={<BalanceJoinPage />}
+            path='/group/:groupId/join'
+            element={<GroupJoinPage />}
           ></Route>
         </Routes>
       </PageTemplate>
