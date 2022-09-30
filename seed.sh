@@ -7,7 +7,7 @@ JWT_SECRET=secret cargo run &
 
 sleep 3
 
-URL=localhost:8000
+URL=localhost:8000/api/v1
 
 # if .env does not exist -> create users
 if [ ! -f .env ]; then
