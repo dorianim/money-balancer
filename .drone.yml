@@ -1,16 +1,16 @@
 kind: pipeline
+type: docker
 name: default
-steps:
-- name: build
-  image: node:16.16.0-alpine3.15
-  commands:
-    - cd client
-    - npm i
-    - npm run build
 
-- name: publish
-  image: itsblue.dev/plugins/codeberg-pages-deploy
-  settings:
-    folder: client/build
-    ssh_key:
-        from_secret: gitea-ssh-key
+steps:
+  - name: publish
+    image: plugins/docker
+    settings:
+      registry: itsblue.dev
+      repo: itsblue.dev/dorian/money-balancer
+      auto_tag: true
+      dockerfile: Dockerfile
+      username:
+        from_secret: gitea-user
+      password:
+        from_secret: gitea-token
