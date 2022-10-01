@@ -12,6 +12,7 @@ use std::ffi::OsStr;
 #[prefix = "client/"]
 struct ClientAssets;
 
+#[cfg(debug_assertions)]
 #[derive(RustEmbed)]
 #[folder = "src/resources/client"]
 #[prefix = "client/"]
