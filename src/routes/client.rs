@@ -6,8 +6,14 @@ use std::{borrow::Cow, path::PathBuf};
 
 use std::ffi::OsStr;
 
+#[cfg(not(debug_assertions))]
 #[derive(RustEmbed)]
 #[folder = "client/build"]
+#[prefix = "client/"]
+struct ClientAssets;
+
+#[derive(RustEmbed)]
+#[folder = "src/resources/client"]
 #[prefix = "client/"]
 struct ClientAssets;
 
