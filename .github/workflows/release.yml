@@ -24,7 +24,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: dorianim/money-balancer
+          images: ghcr.io/dorianim/money-balancer
           tags: type=ref,event=tag
 
       - name: Build and push Docker image
