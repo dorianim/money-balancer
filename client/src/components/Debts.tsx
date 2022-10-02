@@ -25,7 +25,9 @@ export default function Debts(params: {
                     debt.amount / 100
                   }€`
             }
-            color={debt.amount < 0 ? 'error' : 'success'}
+            color={
+              debt.amount < 0 ? 'error' : debt.amount === 0 ? 'info' : 'success'
+            }
           />
         </Grid>
       ))}
