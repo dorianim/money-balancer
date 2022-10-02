@@ -11,35 +11,35 @@ permissions:
 
 jobs:
   push_to_registry:
-    name: Push Docker image to Docker Hub
+    name: Push Docker image to GitHub container registry
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
-
-      - name: Login to DockerHub
+      
+      - name: Log in to GitHub container registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
+          password: ${{ secrets.GITHUB_TOKEN  }}
+      
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ghcr.io/dorianim/money-balancer
+          images: ghcr.io/${{ github.repository }}
           tags: type=ref,event=tag
-
+      
       - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v3
         with:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  tagged-release:
+  tagged_release:
     name: "Tagged Release"
     runs-on: "ubuntu-latest"
     needs: push_to_registry
