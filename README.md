@@ -2,6 +2,15 @@
     money-balancer
 </h1>
 
+<p align="center">
+  <a href="https://github.com/dorianim/money-balancer/actions/workflows/release.yml">
+    <img src="https://github.com/dorianim/money-balancer/actions/workflows/release.yml/badge.svg">
+  </a>
+  <a href="https://rust-reportcard.xuri.me/badge/github.com/dorianim/money-balancer">
+    <img src="https://rust-reportcard.xuri.me/badge/github.com/dorianim/money-balancer">
+  </a>
+</p>
+
 Have you ever been on a group trip and lost track of who paid for what and who owes money to whom? If so, money balancer is the perfect tool for you! It helps you to keep track of who paid for what and calculates your balance with all of your friends.
 
 # Screenshots
