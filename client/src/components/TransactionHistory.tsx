@@ -89,7 +89,6 @@ export default function TransactionHistory(params: {
                           text +
                           (i < array.length - 1 ? ', ' : ' and ') +
                           value,
-                        '',
                       )}
                   </Typography>
                 </Grid>
