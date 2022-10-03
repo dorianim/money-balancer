@@ -8,6 +8,7 @@ import TransactionHistory from '../components/TransactionHistory';
 import { Share } from '@mui/icons-material';
 import TransactionHistorySkeleton from '../components/TransactionHistorySkeleton';
 import TransactionCreationDialog from '../components/TransactionCreationDialog';
+import GroupShareDialog from '../components/GroupShareDialog';
 
 export default function LoginPage() {
   const { groupId } = useParams();
@@ -17,7 +18,9 @@ export default function LoginPage() {
   const { setTitle, setGoBackToUrl, user, setLoginRedirectUrl, api } =
     useContext(Context);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [transactionCreationDialogOpen, setTransactionCreationDialogOpen] =
+    useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [groupMembers, setGroupMembers] =
     useState<Record<string, GroupMember>>();
   const [debts, setDebts] = useState<Debt[]>();
@@ -104,7 +107,7 @@ export default function LoginPage() {
               <Chip
                 label='invite someone'
                 variant='outlined'
-                onClick={() => alert('test')}
+                onClick={() => setShareDialogOpen(true)}
                 icon={<Share sx={{ height: '.8em' }}></Share>}
               />
             </Grid>
@@ -134,7 +137,7 @@ export default function LoginPage() {
           })}
           groupMembersById={groupMembers}
           currentUserId={user?.id ?? ''}
-          onCreateNewTransaction={() => setDialogOpen(true)}
+          onCreateNewTransaction={() => setTransactionCreationDialogOpen(true)}
         ></TransactionHistory>
       ) : (
         <TransactionHistorySkeleton></TransactionHistorySkeleton>
@@ -142,16 +145,21 @@ export default function LoginPage() {
 
       {groupId && groupMembers && (
         <TransactionCreationDialog
-          open={dialogOpen}
-          onClose={() => setDialogOpen(false)}
+          open={transactionCreationDialogOpen}
+          onClose={() => setTransactionCreationDialogOpen(false)}
           onSuccess={() => {
-            setDialogOpen(false);
+            setTransactionCreationDialogOpen(false);
             loadGroupData();
           }}
           groupId={groupId}
           groupMembersById={groupMembers}
         />
       )}
+
+      <GroupShareDialog
+        open={shareDialogOpen}
+        onClose={() => setShareDialogOpen(false)}
+      />
     </>
   );
 }
