@@ -14,8 +14,8 @@ Have you ever been on a group trip and lost track of who paid for what and who o
       </a>
     </td>
     <td align="center">
-      <a href=".github/media/screenshot-1.png">
-        <img src=".github/media/screenshot-1.png" alt="Screenshot 2" width="500px" />
+      <a href=".github/media/screenshot-2.png">
+        <img src=".github/media/screenshot-2.png" alt="Screenshot 2" width="500px" />
       </a>
     </td>
   </tr>
