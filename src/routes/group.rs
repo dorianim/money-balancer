@@ -123,6 +123,22 @@ async fn create_group_tansaction(
     }
 }
 
+#[delete("/<group_id>/transaction/<transaction_id>")]
+async fn delete_group_transaction(
+    group_id: String,
+    transaction_id: String,
+    group_service: &State<GroupService>,
+    user: User,
+) -> Status {
+    match group_service
+        .delete_transaction(&group_id, &user.id, &transaction_id)
+        .await
+    {
+        true => Status::Ok,
+        false => Status::NotFound,
+    }
+}
+
 #[get("/<group_id>/debt")]
 async fn get_group_debts(
     group_id: String,
@@ -147,6 +163,7 @@ pub fn routes() -> Vec<rocket::Route> {
         create_group_member,
         get_group_transactions,
         create_group_tansaction,
+        delete_group_transaction,
         get_group_debts
     ]
 }
