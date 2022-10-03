@@ -1,36 +1,15 @@
-import { Add } from '@mui/icons-material';
-import {
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  Typography,
-} from '@mui/material';
+import { Card, CardContent, Chip, Grid, Typography } from '@mui/material';
 import { Transaction, GroupMember } from '../data/Types';
 
 export default function TransactionHistory(params: {
   transactions: Transaction[];
   groupMembersById: Record<string, GroupMember>;
   currentUserId: string;
-  onCreateNewTransaction: () => void;
 }) {
-  const {
-    transactions,
-    groupMembersById,
-    currentUserId,
-    onCreateNewTransaction,
-  } = params;
+  const { transactions, groupMembersById, currentUserId } = params;
 
   return (
-    <Grid spacing={2} container>
-      <Grid item xs={12}>
-        <Button variant='outlined' onClick={onCreateNewTransaction} fullWidth>
-          <Add sx={{ marginRight: 1 }}></Add>
-          New transaction
-        </Button>
-      </Grid>
-
+    <>
       {transactions.map(transaction => (
         <Grid item xs={12} key={`transaction-${transaction.id}`}>
           <Card>
@@ -97,6 +76,6 @@ export default function TransactionHistory(params: {
           </Card>
         </Grid>
       ))}
-    </Grid>
+    </>
   );
 }

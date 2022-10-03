@@ -1,11 +1,11 @@
-import { Chip, Grid, Skeleton, Typography } from '@mui/material';
+import { Button, Chip, Grid, Skeleton, Typography } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Context } from '../data/Context';
 import { Debt, GroupMember, Transaction } from '../data/Types';
 import Debts from '../components/Debts';
 import TransactionHistory from '../components/TransactionHistory';
-import { Share } from '@mui/icons-material';
+import { Add, Share } from '@mui/icons-material';
 import TransactionHistorySkeleton from '../components/TransactionHistorySkeleton';
 import TransactionCreationDialog from '../components/TransactionCreationDialog';
 import GroupShareDialog from '../components/GroupShareDialog';
@@ -130,18 +130,36 @@ export default function LoginPage() {
         Transaction history
       </Typography>
 
-      {transactions && groupMembers ? (
-        <TransactionHistory
-          transactions={transactions.sort((a, b) => {
-            return b.timestamp - a.timestamp;
-          })}
-          groupMembersById={groupMembers}
-          currentUserId={user?.id ?? ''}
-          onCreateNewTransaction={() => setTransactionCreationDialogOpen(true)}
-        ></TransactionHistory>
-      ) : (
-        <TransactionHistorySkeleton></TransactionHistorySkeleton>
-      )}
+      <Grid spacing={2} container>
+        {transactions && groupMembers ? (
+          <>
+            <Grid item xs={12}>
+              <Button
+                variant='outlined'
+                onClick={() => setTransactionCreationDialogOpen(true)}
+                fullWidth
+              >
+                <Add sx={{ marginRight: 1 }}></Add>
+                New transaction
+              </Button>
+            </Grid>
+            <TransactionHistory
+              transactions={transactions.sort((a, b) => {
+                return b.timestamp - a.timestamp;
+              })}
+              groupMembersById={groupMembers}
+              currentUserId={user?.id ?? ''}
+            />
+          </>
+        ) : (
+          <>
+            <Grid item xs={12}>
+              <Skeleton variant='rectangular' height={36.5} width='100%' />
+            </Grid>
+            <TransactionHistorySkeleton></TransactionHistorySkeleton>
+          </>
+        )}
+      </Grid>
 
       {groupId && groupMembers && (
         <TransactionCreationDialog

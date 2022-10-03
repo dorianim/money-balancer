@@ -2,11 +2,7 @@ import { Card, CardContent, Grid, Skeleton } from '@mui/material';
 
 export default function TransactionHistorySkeleton() {
   return (
-    <Grid spacing={2} container>
-      <Grid item xs={12}>
-        <Skeleton variant='rectangular' height={36.5} width='100%' />
-      </Grid>
-
+    <>
       {new Array(10).fill(0).map((_, i) => (
         <Grid item xs={12} key={i}>
           <Card>
@@ -49,6 +45,6 @@ export default function TransactionHistorySkeleton() {
           </Card>
         </Grid>
       ))}
-    </Grid>
+    </>
   );
 }
