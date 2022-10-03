@@ -185,7 +185,7 @@ export class MoneyBalancerApi {
     const r = await this._authorizedFetch(`/group/${groupId}/transaction`, {
       method: 'POST',
       body: JSON.stringify({
-        amount: amount,
+        amount: Math.trunc(amount),
         description: description,
         debtor_ids: debtorIds,
       }),

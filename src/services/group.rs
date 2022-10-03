@@ -439,13 +439,27 @@ impl GroupService {
         group_id: &str,
         debtor_ids: &Vec<String>,
     ) -> Vec<String> {
-        let mut count_of_unequally_charged_debts = self
+        let count_of_unequally_charged_debts = self
             ._get_count_of_unequally_charged_debts_of_debtors_in_group(group_id)
             .await;
 
-        count_of_unequally_charged_debts.sort_by(|a, b| b.1.cmp(&a.1));
+        let mut next_charged_debtors = debtor_ids
+            .into_iter()
+            .map(|debtor| {
+                (
+                    debtor.to_owned(),
+                    count_of_unequally_charged_debts
+                        .get(debtor)
+                        .or(Some(&0))
+                        .unwrap()
+                        .to_owned(),
+                )
+            })
+            .collect::<Vec<(String, u32)>>();
 
-        count_of_unequally_charged_debts
+        next_charged_debtors.sort_by(|a, b| b.1.cmp(&a.1));
+
+        next_charged_debtors
             .into_iter()
             .filter(|(debtor, _)| debtor_ids.contains(debtor))
             .map(|(debtor, _)| debtor)
@@ -455,7 +469,7 @@ impl GroupService {
     async fn _get_count_of_unequally_charged_debts_of_debtors_in_group(
         &self,
         group_id: &str,
-    ) -> Vec<(String, u32)> {
+    ) -> HashMap<String, u32> {
         model::debt::Entity::find()
             .find_also_related(model::transaction::Entity)
             .filter(model::transaction::Column::GroupId.eq(group_id))
@@ -470,7 +484,7 @@ impl GroupService {
             .expect("error getting counts of unequally charged debts")
             .into_iter()
             .map(|(debt, _)| (debt.debtor_id, debt.count_of_unequally_charged_debts))
-            .collect::<Vec<(String, u32)>>()
+            .collect::<HashMap<String, u32>>()
     }
 
     async fn _populate_group_members_and_debt(&self, group: model::group::Model) -> Group {
