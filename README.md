@@ -11,7 +11,7 @@
   </a>
 </p>
 
-Have you ever been on a group trip and lost track of who paid for what and who owes money to whom? If so, money balancer is the perfect tool for you! It helps you to keep track of who paid for what and calculates your balance with all of your friends.
+Have you ever been on a group trip and lost track of who paid for what and who owes money to whom? If so, money balancer is the perfect tool for you! It helps you to keep track of who paid for what and calculates your balance with all of your friends. A demo is available [here](https://money-balancer.gentlemeadow-7beeb17b.northeurope.azurecontainerapps.io/#/login) but it may be reset at any time.
 
 # Screenshots
 
