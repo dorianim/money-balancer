@@ -148,16 +148,13 @@ export class MoneyBalancerApi {
     return json;
   }
 
-  async getGroup(id: string): Promise<Group | 'unauthorized' | undefined> {
+  async getGroup(id: string): Promise<Group | undefined> {
     const r = await this._authorizedFetch('/group/' + id, {
       method: 'GET',
     });
 
-    if (!r || (await this._error(r, 200, 403))) {
+    if (!r || (await this._error(r, 200))) {
       return undefined;
-    } else if (r.status === 403) {
-      this._resetError();
-      return 'unauthorized';
     }
 
     const json = await r.json();

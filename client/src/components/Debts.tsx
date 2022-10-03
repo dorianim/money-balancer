@@ -8,7 +8,7 @@ export default function Debts(params: {
   const { debts, groupMembersById } = params;
 
   return (
-    <Grid container spacing={2}>
+    <>
       {debts.map(debt => (
         <Grid key={`current-debt-with-${debt.debtor_id}`} xs='auto' item>
           <Chip
@@ -19,7 +19,7 @@ export default function Debts(params: {
                   }`
                 : debt.amount < 0
                 ? `You owe ${groupMembersById[debt.debtor_id].nickname} ${
-                    debt.amount / 100
+                    -debt.amount / 100
                   }€`
                 : `${groupMembersById[debt.debtor_id].nickname} ows you ${
                     debt.amount / 100
@@ -31,6 +31,6 @@ export default function Debts(params: {
           />
         </Grid>
       ))}
-    </Grid>
+    </>
   );
 }
