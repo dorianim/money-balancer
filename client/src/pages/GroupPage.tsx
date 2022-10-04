@@ -149,6 +149,7 @@ export default function LoginPage() {
               })}
               groupMembersById={groupMembers}
               currentUserId={user?.id ?? ''}
+              onChanged={loadGroupData}
             />
           </>
         ) : (

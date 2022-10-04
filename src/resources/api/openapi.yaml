@@ -6,11 +6,6 @@ info:
   version: 1.0.0
 servers:
   - url: /api/v1
-tags:
-  - name: user
-    description: User
-  - name: group
-    description: Group
 
 paths:
   /user:
@@ -134,6 +129,7 @@ paths:
     get:
       tags:
         - group
+        - member
       summary: get all members of a group
       operationId: getGroupMembers
       parameters:
@@ -153,6 +149,7 @@ paths:
     post:
       tags:
         - group
+        - member
       summary: create a group member (join a group)
       operationId: createGroupMember
       parameters:
@@ -166,6 +163,7 @@ paths:
     get:
       tags:
         - group
+        - transaction
       summary: get all transactions of a group
       parameters:
         - $ref: "#/components/parameters/groupId"
@@ -184,6 +182,7 @@ paths:
     post:
       tags:
         - group
+        - transaction
       summary: create a transaction in a group
       parameters:
         - $ref: "#/components/parameters/groupId"
@@ -203,10 +202,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/Transaction"
 
+  /group/{groupId}/transaction/{transactionId}:
+    delete:
+      tags:
+        - group
+        - transaction
+      summary: deletes a transaction in a group
+      description: deletes a transaction in a group where the authenticated user is the creditor
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+        - $ref: "#/components/parameters/transactionId"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: the transaction was deleted successfully
+        404:
+          description: the transaction was not found
+
   /group/{groupId}/debt:
     get:
       tags:
         - group
+        - debt
       summary: get all debts of the current user in a group
       parameters:
         - $ref: "#/components/parameters/groupId"
@@ -348,6 +366,15 @@ components:
         format: uuid
       required: true
       description: id of the group
+
+    transactionId:
+      in: path
+      name: transactionId
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: id of the transaction
 
   securitySchemes:
     bearerAuth: # arbitrary name for the security scheme

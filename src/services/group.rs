@@ -293,6 +293,32 @@ impl GroupService {
         )
     }
 
+    pub async fn delete_transaction(
+        &self,
+        group_id: &str,
+        user_id: &str,
+        transaction_id: &str,
+    ) -> bool {
+        let transaction_to_delete = model::transaction::Entity::find()
+            .filter(model::transaction::Column::Id.eq(transaction_id))
+            .filter(model::transaction::Column::GroupId.eq(group_id))
+            .filter(model::transaction::Column::CreditorId.eq(user_id))
+            .one(self.db.as_ref())
+            .await
+            .expect("error querying transaction");
+
+        match transaction_to_delete {
+            None => false,
+            Some(t) => {
+                t.delete(self.db.as_ref())
+                    .await
+                    .expect("error deleting transaction")
+                    .rows_affected
+                    > 0
+            }
+        }
+    }
+
     async fn _get_transaction_by_id(&self, transaction_id: String) -> Option<Transaction> {
         match self
             ._get_tansactions_help(model::transaction::Entity::find_by_id(transaction_id))
