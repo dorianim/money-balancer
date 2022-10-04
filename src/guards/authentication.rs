@@ -1,4 +1,5 @@
 use crate::services;
+use crate::services::configuration::ConfigurationService;
 use crate::services::user::UserService;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use rocket::http::Status;
@@ -25,6 +26,7 @@ impl<'r> FromRequest<'r> for services::user::User {
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let user_service = request.rocket().state::<UserService>().unwrap();
+        let configuration_service = request.rocket().state::<ConfigurationService>().unwrap();
         let tokens: Vec<_> = request.headers().get("authorization").collect();
 
         if tokens.len() != 1 {
@@ -33,7 +35,7 @@ impl<'r> FromRequest<'r> for services::user::User {
 
         let token = tokens.get(0).unwrap().to_string().replace("Bearer ", "");
 
-        let claims = validate_jwt(token).await;
+        let claims = validate_jwt(token, configuration_service.jwt_secret()).await;
 
         if let Err(e) = claims {
             println!("   >> Error validating token: {}", e);
@@ -50,21 +52,24 @@ impl<'r> FromRequest<'r> for services::user::User {
     }
 }
 
-pub async fn validate_jwt(token: String) -> Result<JwtClaims, jsonwebtoken::errors::Error> {
+pub async fn validate_jwt(
+    token: String,
+    jwt_secret: String,
+) -> Result<JwtClaims, jsonwebtoken::errors::Error> {
     let mut validation = Validation::new(Algorithm::HS256);
     validation.set_issuer(&["de:itsblue:money-balancer"]);
     validation.validate_exp = false;
 
     let token = jsonwebtoken::decode::<JwtClaims>(
         &token,
-        &DecodingKey::from_secret(get_secret().as_bytes()),
+        &DecodingKey::from_secret(jwt_secret.as_bytes()),
         &validation,
     )?;
 
     Ok(token.claims)
 }
 
-pub fn generate_jwt(user_id: String) -> String {
+pub fn generate_jwt(user_id: String, jwt_secret: String) -> String {
     let jwt = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &JwtClaims {
@@ -72,13 +77,8 @@ pub fn generate_jwt(user_id: String) -> String {
             iss: "de:itsblue:money-balancer".to_string(),
             exp: 0,
         },
-        &jsonwebtoken::EncodingKey::from_secret(get_secret().as_bytes()),
+        &jsonwebtoken::EncodingKey::from_secret(jwt_secret.as_bytes()),
     );
 
     jwt.unwrap()
-}
-
-fn get_secret() -> String {
-    let result = std::env::var("JWT_SECRET");
-    result.unwrap()
 }
