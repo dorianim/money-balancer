@@ -196,6 +196,24 @@ export class MoneyBalancerApi {
     return json;
   }
 
+  async deleteTransactionOfGroup(
+    groupId: string,
+    transactionId: string,
+  ): Promise<boolean> {
+    const r = await this._authorizedFetch(
+      `/group/${groupId}/transaction/${transactionId}`,
+      {
+        method: 'DELETE',
+      },
+    );
+
+    if (!r || (await this._error(r, 200))) {
+      return false;
+    }
+
+    return true;
+  }
+
   async getTransactionsOfGroup(
     groupId: string,
   ): Promise<Transaction[] | undefined> {
