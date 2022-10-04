@@ -5,6 +5,8 @@ use rocket::serde::Serialize;
 use sea_orm::*;
 use std::sync::Arc;
 
+use super::configuration::ConfigurationService;
+
 #[derive(Serialize)]
 pub struct User {
     pub id: String,
@@ -15,6 +17,7 @@ pub struct User {
 #[derive(Debug)]
 pub struct UserService {
     db: Arc<DatabaseConnection>,
+    configuration_service: Arc<ConfigurationService>,
 }
 
 impl Into<User> for crate::model::user::Model {
@@ -28,8 +31,14 @@ impl Into<User> for crate::model::user::Model {
 }
 
 impl UserService {
-    pub fn new(db: Arc<DatabaseConnection>) -> UserService {
-        UserService { db: db }
+    pub fn new(
+        db: Arc<DatabaseConnection>,
+        configuration_service: Arc<ConfigurationService>,
+    ) -> UserService {
+        UserService {
+            db: db,
+            configuration_service: configuration_service,
+        }
     }
 
     pub async fn create_user(
@@ -78,7 +87,10 @@ impl UserService {
         if !bcrypt::verify(password.to_owned(), &user.password) {
             Err(())
         } else {
-            Ok(authentication::generate_jwt(user.id))
+            Ok(authentication::generate_jwt(
+                user.id,
+                self.configuration_service.jwt_secret(),
+            ))
         }
     }
 

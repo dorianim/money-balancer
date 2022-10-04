@@ -19,6 +19,7 @@ pwhash = "1"
 jsonwebtoken = "8"
 serial_test = "0.9.0"
 rust-embed = "6.4.1"
+config = "0.13.2"
 
 [dependencies.migration]
 path = "./migration"
