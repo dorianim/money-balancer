@@ -1,11 +1,8 @@
-use crate::guards::authentication;
 use crate::model;
 use pwhash::bcrypt;
 use rocket::serde::Serialize;
 use sea_orm::*;
 use std::sync::Arc;
-
-use super::configuration::ConfigurationService;
 
 #[derive(Serialize)]
 pub struct User {
@@ -17,7 +14,6 @@ pub struct User {
 #[derive(Debug)]
 pub struct UserService {
     db: Arc<DatabaseConnection>,
-    configuration_service: Arc<ConfigurationService>,
 }
 
 impl Into<User> for crate::model::user::Model {
@@ -31,14 +27,8 @@ impl Into<User> for crate::model::user::Model {
 }
 
 impl UserService {
-    pub fn new(
-        db: Arc<DatabaseConnection>,
-        configuration_service: Arc<ConfigurationService>,
-    ) -> UserService {
-        UserService {
-            db: db,
-            configuration_service: configuration_service,
-        }
+    pub fn new(db: Arc<DatabaseConnection>) -> UserService {
+        UserService { db: db }
     }
 
     pub async fn create_user(
@@ -68,29 +58,21 @@ impl UserService {
         })
     }
 
-    pub async fn create_user_token(
+    pub async fn check_username_and_password(
         &self,
-        username: String,
-        password: String,
-    ) -> Result<String, ()> {
+        username: &str,
+        password: &str,
+    ) -> Option<String> {
         let user = model::user::Entity::find()
             .filter(model::user::Column::Username.eq(username.to_owned()))
             .one(self.db.as_ref())
             .await
-            .expect("Failed to query user!");
-
-        let user = match user {
-            None => Err(()),
-            Some(u) => Ok(u),
-        }?;
+            .expect("Failed to query user!")?;
 
         if !bcrypt::verify(password.to_owned(), &user.password) {
-            Err(())
+            None
         } else {
-            Ok(authentication::generate_jwt(
-                user.id,
-                self.configuration_service.jwt_secret(),
-            ))
+            Some(user.id)
         }
     }
 

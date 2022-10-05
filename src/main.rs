@@ -87,12 +87,20 @@ pub fn build_test_rocket() -> Rocket<Build> {
 pub fn build_rocket(db: DatabaseConnection) -> Rocket<Build> {
     let db = Arc::new(db);
     let configuration_service = Arc::new(services::configuration::ConfigurationService::new());
-    let user_service = services::user::UserService::new(db.clone(), configuration_service.clone());
-    let group_service = services::group::GroupService::new(db);
+
+    let user_service = Arc::new(services::user::UserService::new(db.clone()));
+    let group_service = services::group::GroupService::new(db.clone());
+
+    let authentication_service = Arc::new(services::authentication::AuthenticationService::new(
+        db.clone(),
+        configuration_service.clone(),
+        user_service.clone(),
+    ));
 
     rocket::build()
         .attach(fairings::cors::CORS)
         .manage(configuration_service)
+        .manage(authentication_service)
         .manage(user_service)
         .manage(group_service)
         .mount("/", routes![options])
