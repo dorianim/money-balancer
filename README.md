@@ -45,16 +45,39 @@ services:
     volumes:
       - ./data:/data
     environment:
-      - JWT_SECRET=some_super_secret_secret
+      - MONEYBALANCER_JWT_SECRET=some_super_secret_secret
 ```
 
 Using `docker`:
 
 ```bash
-docker run -p8000:8000 -e JWT_SECRET=some_super_secret_secret -v $(pwd)/data:/data ghcr.io/dorianim/money-balancer
+docker run -p8000:8000 -e MONEYBALANCER_JWT_SECRET=some_super_secret_secret -v $(pwd)/data:/data ghcr.io/dorianim/money-balancer
 ```
 
 You can then access money-balancer on [`http://localhost:8000`](http://localhost:8000). The API documentation can be found at [`http://localhost:8000/api/v1`](http://localhost:8000/api/v1).
+
+# Config options
+
+- `MONEYBALANCER_JWT_SECRET`: a random value for the JWT signature
+
+### Authentication
+
+##### Local
+
+- `MONEYBALANCER_AUTH_LOCAL_ENABLED`: enable local username/password authentication
+
+##### Proxy
+
+Proxy authentication can be used with services like [authelia](https://www.authelia.com/) and [authentik](https://goauthentik.io)
+
+- `MONEYBALANCER_AUTH_PROXY_ENABLED`: enable proxy authentication
+- `MONEYBALANCER_AUTH_PROXY_HEADERS_USERNAME`: header containing the username (e.g. `X-authentik-username`)
+- `MONEYBALANCER_AUTH_PROXY_HEADERS_NICKNAME`: header containing the nickname (e.g. `X-authentik-name`)
+
+If you want to use another sign on method, you may only protect these routes:
+
+- `/api/v1/auth/proxy`
+- `/#/login/proxy`
 
 # How debts are split up:
 
