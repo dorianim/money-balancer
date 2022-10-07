@@ -106,20 +106,24 @@ export default function LoginPage() {
           </Grid>
         )}
 
-        <Grid item xs={12}>
-          <Divider>Or</Divider>
-        </Grid>
+        {availableProviders?.local.enabled && (
+          <>
+            <Grid item xs={12}>
+              <Divider>Or</Divider>
+            </Grid>
 
-        <Grid item xs={12}>
-          <Button
-            disabled={loading}
-            variant='outlined'
-            onClick={() => navigate('/registration')}
-            fullWidth
-          >
-            Register
-          </Button>
-        </Grid>
+            <Grid item xs={12}>
+              <Button
+                disabled={loading}
+                variant='outlined'
+                onClick={() => navigate('/registration')}
+                fullWidth
+              >
+                Register
+              </Button>
+            </Grid>
+          </>
+        )}
       </Grid>
     </>
   );
