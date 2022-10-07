@@ -36,8 +36,8 @@ registerRoute(
       return false;
     }
 
-    // If this is a URL that starts with /_, skip.
-    if (url.pathname.startsWith('/_')) {
+    // If this is a URL that starts with /_ or /api, skip.
+    if (url.pathname.startsWith('/_') || url.pathname.startsWith('/api')) {
       return false;
     }
 
