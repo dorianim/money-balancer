@@ -1,4 +1,4 @@
-use std::process;
+use std::{env, process};
 
 use envconfig::Envconfig;
 
@@ -37,6 +37,8 @@ pub struct ConfigurationService {
 
 impl ConfigurationService {
     pub fn new() -> ConfigurationService {
+        ConfigurationService::_load_deprecated_variables();
+
         let res = ConfigurationService::init_from_env();
 
         if let Ok(c) = res {
@@ -63,6 +65,13 @@ impl ConfigurationService {
         match self.auth.proxy.enabled {
             false => None,
             true => Some(&self.auth.proxy),
+        }
+    }
+
+    // used for backwards compatibility
+    fn _load_deprecated_variables() {
+        if env::var("JWT_SECRET").is_ok() && env::var("MONEYBALANCER_JWT_SECRET").is_err() {
+            env::set_var("MONEYBALANCER_JWT_SECRET", env::var("JWT_SECRET").unwrap());
         }
     }
 }
