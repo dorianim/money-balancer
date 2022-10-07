@@ -79,8 +79,7 @@ If you want to use another sign on method, you may only protect the route `/api/
 For example in [Authentik](https://goauthentik.io), you may use this as the unauthenticated paths:
 
 ```
-/
-/api/v1/[^/]*/(?!proxy).*
+^([^p]|p(p|r(p|o(p|xp)))*([^pr]|r([^op]|o([^px]|x[^py]))))*(p(p|r(p|o(p|xp)))*(r(o?|ox))?)?$
 ```
 
 # How debts are split up:
