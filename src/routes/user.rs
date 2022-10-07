@@ -1,4 +1,5 @@
 use crate::services::authentication::AuthenticationService;
+use crate::services::configuration::ConfigurationService;
 use crate::services::group::{Group, GroupService};
 use crate::services::user::{User, UserService};
 use ::serde::{Deserialize, Serialize};
@@ -62,9 +63,14 @@ async fn get_current_user(
 #[post("/", data = "<user_creation_request>")]
 async fn create_user(
     user_service: &State<Arc<UserService>>,
+    configuration_service: &State<Arc<ConfigurationService>>,
     group_service: &State<GroupService>,
     user_creation_request: Json<UserCreationRequest>,
 ) -> Result<Json<FullUser>, Status> {
+    if configuration_service.auth_local().is_none() {
+        return Err(Status::Forbidden);
+    }
+
     let res = user_service
         .create_user(
             user_creation_request.username.to_owned(),

@@ -82,6 +82,7 @@ paths:
       tags:
         - user
       summary: create a user
+      description: Create a local user. Only allowed when local authentication is enabled.
       operationId: createUser
       requestBody:
         description: detailed information about the user
