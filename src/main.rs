@@ -92,7 +92,6 @@ pub fn build_rocket(db: DatabaseConnection) -> Rocket<Build> {
     let group_service = services::group::GroupService::new(db.clone());
 
     let authentication_service = Arc::new(services::authentication::AuthenticationService::new(
-        db.clone(),
         configuration_service.clone(),
         user_service.clone(),
     ));
@@ -108,4 +107,5 @@ pub fn build_rocket(db: DatabaseConnection) -> Rocket<Build> {
         .mount("/api/v1", routes::swagger::routes())
         .mount("/api/v1/user", routes::user::routes())
         .mount("/api/v1/group", routes::group::routes())
+        .mount("/api/v1/auth", routes::auth::routes())
 }

@@ -76,18 +76,22 @@ impl UserService {
         }
     }
 
-    pub async fn get_user_by_id(&self, user_id: String) -> Result<User, ()> {
+    pub async fn get_user_by_id(&self, user_id: String) -> Option<User> {
         let user = model::user::Entity::find_by_id(user_id)
             .one(self.db.as_ref())
             .await
-            .expect("Failed to query user!");
+            .expect("Failed to query user!")?;
 
-        if let None = user {
-            return Err(());
-        }
+        Some(user.into())
+    }
 
-        let user = user.unwrap();
+    pub async fn get_user_by_username(&self, username: &str) -> Option<User> {
+        let user = model::user::Entity::find()
+            .filter(model::user::Column::Username.eq(username))
+            .one(self.db.as_ref())
+            .await
+            .expect("Failed to query user!")?;
 
-        Ok(user.into())
+        Some(user.into())
     }
 }

@@ -8,6 +8,60 @@ servers:
   - url: /api/v1
 
 paths:
+
+  /auth:
+    get: 
+      tags:
+        - auth
+      summary: get authentication config
+      operationId: getAuth
+      responses:
+        200:
+          description: authentication config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  local:
+                    type: object
+                    properties:
+                      enabled: 
+                        type: boolean
+                  proxy:
+                    type: object
+                    properties:
+                      enabled:
+                        type: boolean
+
+  /auth/local:
+    post:
+      tags:
+        - auth
+      summary: get a token from the local provider
+      description: get a token by providing username and password to the local authentication provider
+      requestBody:
+        description: username and password
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocalAuthenticationRequest"
+        required: true
+      responses:
+        200:
+          $ref: '#/components/responses/AuthenticationResponse'
+
+  /auth/proxy:
+    post:
+      tags: 
+        - auth
+      summary: get a token from the proxy provider
+      description: get a token by sending an empty request to the proxy provider
+      responses:
+        200:
+          $ref: '#/components/responses/AuthenticationResponse'
+
+
   /user:
     get:
       tags:
@@ -45,27 +99,21 @@ paths:
                 $ref: "#/components/schemas/User"
   /user/token:
     post:
+      deprecated: true
       tags:
         - user
-      summary: create an authentication token
-      operationId: createAuthenticationToken
+      summary: use `/auth/local` instead! 
+      description: just used for backwards compatibility
       requestBody:
         description: username and password
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserAuthenticationRequest"
+              $ref: "#/components/schemas/LocalAuthenticationRequest"
         required: true
       responses:
         200:
-          description: detailed information about the new user
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token:
-                    type: string
+          $ref: '#/components/responses/AuthenticationResponse'
 
   /group:
     get:
@@ -242,6 +290,15 @@ paths:
 
 components:
   schemas:
+    LocalAuthenticationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
     User:
       type: object
       properties:
@@ -264,15 +321,6 @@ components:
         password:
           type: string
       required: [username, nickname, password]
-
-    UserAuthenticationRequest:
-      type: object
-      properties:
-        username:
-          type: string
-        password:
-          type: string
-      required: [username, password]
 
     Group:
       type: object
@@ -356,6 +404,18 @@ components:
         description:
           type: string
           example: "Bread"
+
+  responses:
+    AuthenticationResponse:
+      description: the token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+                format: jwt
 
   parameters:
     groupId:

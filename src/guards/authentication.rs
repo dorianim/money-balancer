@@ -4,14 +4,18 @@ use crate::services::user::UserService;
 use rocket::http::Status;
 use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest, Request};
+use std::sync::Arc;
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for services::user::User {
     type Error = AuthenticationError;
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let user_service = request.rocket().state::<UserService>().unwrap();
-        let authentication_service = request.rocket().state::<AuthenticationService>().unwrap();
+        let user_service = request.rocket().state::<Arc<UserService>>().unwrap();
+        let authentication_service = request
+            .rocket()
+            .state::<Arc<AuthenticationService>>()
+            .unwrap();
         let tokens: Vec<_> = request.headers().get("authorization").collect();
 
         if tokens.len() != 1 {
@@ -29,7 +33,7 @@ impl<'r> FromRequest<'r> for services::user::User {
 
         let user = user_service.get_user_by_id(claims.unwrap().id).await;
 
-        if let Err(_) = user {
+        if user.is_none() {
             return Outcome::Failure((Status::Unauthorized, AuthenticationError::InvalidToken));
         }
 

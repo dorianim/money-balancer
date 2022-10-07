@@ -1,13 +1,14 @@
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use rocket::serde::{Deserialize, Serialize};
-use sea_orm::*;
 use std::{collections::HashMap, process, sync::Arc};
 
-use super::{configuration::ConfigurationService, user::UserService};
+use super::{
+    configuration::ConfigurationService,
+    user::{User, UserService},
+};
 
 #[derive(Debug)]
 pub struct AuthenticationService {
-    db: Arc<DatabaseConnection>,
     configuration_service: Arc<ConfigurationService>,
     user_service: Arc<UserService>,
 }
@@ -27,13 +28,11 @@ pub struct JwtClaims {
 
 impl AuthenticationService {
     pub fn new(
-        db: Arc<DatabaseConnection>,
         configuration_service: Arc<ConfigurationService>,
         user_service: Arc<UserService>,
     ) -> AuthenticationService {
         // make sure, we have at least one working provider
         let new = AuthenticationService {
-            db: db,
             configuration_service: configuration_service,
             user_service: user_service,
         };
@@ -74,8 +73,29 @@ impl AuthenticationService {
     pub async fn authenticate_proxy(&self, headers: HashMap<String, String>) -> Option<String> {
         let config = self.configuration_service.auth_proxy()?;
 
-        // TODO
-        Some("bla".to_owned())
+        let username = headers.get(config.headers_username.as_ref().unwrap())?;
+        let mut nickname = username;
+        if config.headers_username.is_some() {
+            nickname = headers.get(config.headers_nickname.as_ref().unwrap())?;
+        }
+
+        let user = self
+            ._get_or_create_user(username.to_owned(), nickname.to_owned())
+            .await;
+
+        Some(self.generate_jwt(user.id))
+    }
+
+    async fn _get_or_create_user(&self, username: String, nickname: String) -> User {
+        let user = self.user_service.get_user_by_username(&username).await;
+        if let Some(u) = user {
+            return u.into();
+        }
+
+        self.user_service
+            .create_user(username, nickname, uuid::Uuid::new_v4().to_string())
+            .await
+            .unwrap()
     }
 
     fn _config_valid(&self) -> bool {
