@@ -30,9 +30,17 @@ export default function LoginPage() {
   const loadAvailableProviders = async () => {
     const availableProviders = await api.getAvailableAuthenticationProviders();
     setAvailableProviders(availableProviders);
+
+    console.log(availableProviders);
+    if (
+      !availableProviders?.local.enabled &&
+      availableProviders?.proxy.enabled
+    ) {
+      loginUsingProxy();
+    }
   };
 
-  const onSubmit = async (data: FieldValues) => {
+  const loginUsingLocal = async (data: FieldValues) => {
     setLoading(true);
     const loginResult = await api.localLogin(data.username, data.password);
     if (!loginResult) {
@@ -53,6 +61,10 @@ export default function LoginPage() {
     navigate(loginRedirectUrl, { replace: true });
   };
 
+  const loginUsingProxy = () => {
+    window.location.replace(`${window.location.href}/proxy`);
+  };
+
   return (
     <>
       <Grid container spacing={2}>
@@ -60,26 +72,25 @@ export default function LoginPage() {
           <CollapsableAlert></CollapsableAlert>
         </Grid>
 
-        {availableProviders?.local && (
+        {availableProviders?.local.enabled && (
           <Grid item xs={12}>
-            <LoginForm onSubmit={onSubmit} loading={loading} />
+            <LoginForm onSubmit={loginUsingLocal} loading={loading} />
           </Grid>
         )}
 
-        {availableProviders?.local && availableProviders?.proxy && (
-          <Grid item xs={12}>
-            <Divider>Or</Divider>
-          </Grid>
-        )}
+        {availableProviders?.local.enabled &&
+          availableProviders?.proxy.enabled && (
+            <Grid item xs={12}>
+              <Divider>Or</Divider>
+            </Grid>
+          )}
 
-        {availableProviders?.proxy && (
+        {availableProviders?.proxy.enabled && (
           <Grid item xs={12}>
             <Button
               variant='contained'
               disabled={loading}
-              onClick={() =>
-                window.location.replace(`${window.location.href}/proxy`)
-              }
+              onClick={loginUsingProxy}
               fullWidth
             >
               Login using SSO
