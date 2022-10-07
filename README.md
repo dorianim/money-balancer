@@ -58,15 +58,17 @@ You can then access money-balancer on [`http://localhost:8000`](http://localhost
 
 # Config options
 
+## General
+
 - `MONEYBALANCER_JWT_SECRET`: a random value for the JWT signature
 
-### Authentication
+## Authentication
 
-##### Local
+### Local
 
 - `MONEYBALANCER_AUTH_LOCAL_ENABLED`: enable local username/password authentication
 
-##### Proxy
+### Proxy
 
 Proxy authentication can be used with services like [Authelia](https://www.authelia.com/) and [Authentik](https://goauthentik.io)
 
