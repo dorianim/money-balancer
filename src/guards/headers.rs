@@ -19,7 +19,12 @@ impl<'r> FromRequest<'r> for RequestHeaders {
             .headers()
             .clone()
             .into_iter()
-            .map(|header| (header.name.to_string(), header.value.to_string()))
+            .map(|header| {
+                (
+                    header.name.to_string().to_lowercase(),
+                    header.value.to_string(),
+                )
+            })
             .collect::<HashMap<String, String>>();
 
         Outcome::Success(RequestHeaders {

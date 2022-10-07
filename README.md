@@ -68,16 +68,20 @@ You can then access money-balancer on [`http://localhost:8000`](http://localhost
 
 ##### Proxy
 
-Proxy authentication can be used with services like [authelia](https://www.authelia.com/) and [authentik](https://goauthentik.io)
+Proxy authentication can be used with services like [Authelia](https://www.authelia.com/) and [Authentik](https://goauthentik.io)
 
 - `MONEYBALANCER_AUTH_PROXY_ENABLED`: enable proxy authentication
 - `MONEYBALANCER_AUTH_PROXY_HEADERS_USERNAME`: header containing the username (e.g. `X-authentik-username`)
 - `MONEYBALANCER_AUTH_PROXY_HEADERS_NICKNAME`: header containing the nickname (e.g. `X-authentik-name`)
 
-If you want to use another sign on method, you may only protect these routes:
+If you want to use another sign on method, you may only protect the route `/api/v1/auth/proxy`.
 
-- `/api/v1/auth/proxy`
-- `/#/login/proxy`
+For example in [Authentik](https://goauthentik.io), you may use this as the unauthenticated paths:
+
+```
+/
+/api/v1/[^/]*/(?!proxy).*
+```
 
 # How debts are split up:
 

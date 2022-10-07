@@ -31,7 +31,6 @@ export default function LoginPage() {
     const availableProviders = await api.getAvailableAuthenticationProviders();
     setAvailableProviders(availableProviders);
 
-    console.log(availableProviders);
     if (
       !availableProviders?.local.enabled &&
       availableProviders?.proxy.enabled
@@ -62,7 +61,7 @@ export default function LoginPage() {
   };
 
   const loginUsingProxy = () => {
-    window.location.replace(`${window.location.href}/proxy`);
+    api.proxyRedirect();
   };
 
   return (

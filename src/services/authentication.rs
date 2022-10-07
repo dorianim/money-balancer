@@ -73,10 +73,10 @@ impl AuthenticationService {
     pub async fn authenticate_proxy(&self, headers: HashMap<String, String>) -> Option<String> {
         let config = self.configuration_service.auth_proxy()?;
 
-        let username = headers.get(config.headers_username.as_ref().unwrap())?;
+        let username = headers.get(&config.headers_username.as_ref().unwrap().to_lowercase())?;
         let mut nickname = username;
         if config.headers_username.is_some() {
-            nickname = headers.get(config.headers_nickname.as_ref().unwrap())?;
+            nickname = headers.get(&config.headers_nickname.as_ref().unwrap().to_lowercase())?;
         }
 
         let user = self
