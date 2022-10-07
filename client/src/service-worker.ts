@@ -36,19 +36,8 @@ registerRoute(
       return false;
     }
 
-    // If this is a URL that starts with /_ or /api, skip.
-    if (url.pathname.startsWith('/_') || url.pathname.startsWith('/api')) {
-      return false;
-    }
-
-    // If this looks like a URL for a resource, because it contains
-    // a file extension, skip.
-    if (url.pathname.match(fileExtensionRegexp)) {
-      return false;
-    }
-
-    // Return true to signal that we want to use the handler.
-    return true;
+    // we are using a hash router, so all urls are /
+    return url.pathname === '/';
   },
   createHandlerBoundToURL(process.env.PUBLIC_URL + '/index.html'),
 );
