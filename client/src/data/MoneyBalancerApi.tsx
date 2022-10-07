@@ -133,6 +133,10 @@ export class MoneyBalancerApi {
     return true;
   }
 
+  async proxyRedirect() {
+    window.location.href = `${URL}/auth/proxy`;
+  }
+
   async createUser(
     username: string,
     nickname: string,

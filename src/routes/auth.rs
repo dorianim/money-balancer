@@ -2,6 +2,7 @@ use crate::guards;
 use crate::services::authentication::AuthenticationService;
 use ::serde::{Deserialize, Serialize};
 use rocket::http::Status;
+use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::*;
 use std::sync::Arc;
@@ -64,6 +65,11 @@ async fn local(
     }
 }
 
+#[get("/proxy")]
+async fn proxy_redirect() -> Redirect {
+    Redirect::to(uri!("/#/login/proxy"))
+}
+
 #[post("/proxy")]
 async fn proxy(
     request_headers: guards::headers::RequestHeaders,
@@ -80,5 +86,5 @@ async fn proxy(
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![available_providers, local, proxy]
+    routes![available_providers, local, proxy, proxy_redirect]
 }
