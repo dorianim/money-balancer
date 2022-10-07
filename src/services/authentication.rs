@@ -75,7 +75,7 @@ impl AuthenticationService {
 
         let username = headers.get(&config.headers_username.as_ref().unwrap().to_lowercase())?;
         let mut nickname = username;
-        if config.headers_username.is_some() {
+        if config.headers_nickname.is_some() {
             nickname = headers.get(&config.headers_nickname.as_ref().unwrap().to_lowercase())?;
         }
 
