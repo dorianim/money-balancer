@@ -1,22 +1,21 @@
-import { Button, Grid, TextField } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
+import { Button, Divider, Grid, Skeleton } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { Context } from '../data/Context';
 import { useNavigate } from 'react-router-dom';
 import CollapsableAlert from '../components/CollapsableAlert';
-import { FieldValues, useForm } from 'react-hook-form';
+import { FieldValues } from 'react-hook-form';
+import { AvailableAuthenticationProviders } from '../data/Types';
+import LoginForm from '../components/LoginForm';
 
 export default function LoginPage() {
   const { setTitle, setGoBackToUrl, loginRedirectUrl, setUser, api } =
     useContext(Context);
   const navigate = useNavigate();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
 
   const [loading, setLoading] = useState(false);
+  const [availableProviders, setAvailableProviders] =
+    useState<AvailableAuthenticationProviders>();
+
   useEffect(() => {
     if (api.loggedIn()) {
       navigate('/');
@@ -25,7 +24,13 @@ export default function LoginPage() {
 
     setTitle('Login');
     setGoBackToUrl(undefined);
+    loadAvailableProviders();
   }, []);
+
+  const loadAvailableProviders = async () => {
+    const availableProviders = await api.getAvailableAuthenticationProviders();
+    setAvailableProviders(availableProviders);
+  };
 
   const onSubmit = async (data: FieldValues) => {
     setLoading(true);
@@ -50,55 +55,61 @@ export default function LoginPage() {
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <CollapsableAlert></CollapsableAlert>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              label='Username'
-              disabled={loading}
-              error={errors.username !== undefined}
-              {...register('username', { required: true })}
-              fullWidth
-            ></TextField>
-          </Grid>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <CollapsableAlert></CollapsableAlert>
+        </Grid>
 
+        {availableProviders?.local && (
           <Grid item xs={12}>
-            <TextField
-              type={'password'}
-              label='Password'
-              disabled={loading}
-              error={errors.password !== undefined}
-              {...register('password', { required: true })}
-              fullWidth
-            ></TextField>
+            <LoginForm onSubmit={onSubmit} loading={loading} />
           </Grid>
+        )}
 
+        {availableProviders?.local && availableProviders?.proxy && (
           <Grid item xs={12}>
-            <LoadingButton
-              loading={loading}
-              variant='contained'
-              type='submit'
-              fullWidth
-            >
-              Login
-            </LoadingButton>
+            <Divider>Or</Divider>
           </Grid>
+        )}
 
+        {availableProviders?.proxy && (
           <Grid item xs={12}>
             <Button
+              variant='contained'
               disabled={loading}
-              variant='outlined'
-              onClick={() => navigate('/registration')}
+              onClick={() =>
+                window.location.replace(`${window.location.href}/proxy`)
+              }
               fullWidth
             >
-              Register
+              Login using SSO
             </Button>
           </Grid>
+        )}
+
+        {!availableProviders && (
+          <Grid item xs={12}>
+            <Skeleton height={52.5}></Skeleton>
+            <Skeleton height={52.5}></Skeleton>
+            <Skeleton height={52.5}></Skeleton>
+          </Grid>
+        )}
+
+        <Grid item xs={12}>
+          <Divider>Or</Divider>
         </Grid>
-      </form>
+
+        <Grid item xs={12}>
+          <Button
+            disabled={loading}
+            variant='outlined'
+            onClick={() => navigate('/registration')}
+            fullWidth
+          >
+            Register
+          </Button>
+        </Grid>
+      </Grid>
     </>
   );
 }

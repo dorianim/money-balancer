@@ -1,5 +1,11 @@
 import { ErrorData } from './Context';
-import { Debt, Group, Transaction, User } from './Types';
+import {
+  AvailableAuthenticationProviders,
+  Debt,
+  Group,
+  Transaction,
+  User,
+} from './Types';
 
 export const URL =
   !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
@@ -78,6 +84,21 @@ export class MoneyBalancerApi {
 
   async logout() {
     this._setToken('');
+  }
+
+  async getAvailableAuthenticationProviders(): Promise<
+    AvailableAuthenticationProviders | undefined
+  > {
+    const r = await this._fetch('/auth', {
+      method: 'GET',
+    });
+
+    if (!r || (await this._error(r, 200))) {
+      return undefined;
+    }
+
+    const json = await r.json();
+    return json;
   }
 
   async localLogin(username: string, password: string) {
