@@ -82,6 +82,8 @@ For example in [Authentik](https://goauthentik.io), you may use this as the unau
 ^([^p]|p(p|r(p|o(p|xp)))*([^pr]|r([^op]|o([^px]|x[^py]))))*(p(p|r(p|o(p|xp)))*(r(o?|ox))?)?$
 ```
 
+(excludes everything that contains `proxy`, generated with [this tool](https://www.formauri.es/personal/pgimeno/misc/non-match-regex/?word=proxy))
+
 # How debts are split up:
 
 - amount / debtors
