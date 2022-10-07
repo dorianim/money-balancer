@@ -80,13 +80,27 @@ export class MoneyBalancerApi {
     this._setToken('');
   }
 
-  async login(username: string, password: string) {
+  async localLogin(username: string, password: string) {
     const r = await this._fetch('/user/token', {
       method: 'POST',
       body: JSON.stringify({
         username: username,
         password: password,
       }),
+    });
+
+    if (!r || (await this._error(r, 200))) {
+      return false;
+    }
+
+    const json = await r.json();
+    this._setToken(json.token);
+    return true;
+  }
+
+  async proxyLogin() {
+    const r = await this._fetch('/auth/proxy', {
+      method: 'POST',
     });
 
     if (!r || (await this._error(r, 200))) {

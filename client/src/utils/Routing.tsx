@@ -6,6 +6,7 @@ import PageTemplate from './PageTemplate';
 import GroupPage from '../pages/GroupPage';
 import GroupJoinPage from '../pages/GroupJoinPage';
 import RegistrationPage from '../pages/RegistrationPage';
+import ProxyLoginPage from '../pages/ProxyLoginPage';
 
 /**
  *
@@ -19,6 +20,7 @@ export default function Routing() {
         <Routes>
           <Route path='/' element={<GroupListPage />} />
           <Route path='/login' element={<LoginPage />}></Route>
+          <Route path='/login/proxy' element={<ProxyLoginPage />}></Route>
           <Route path='/registration' element={<RegistrationPage />}></Route>
           <Route path='/group/:groupId' element={<GroupPage />}></Route>
           <Route

@@ -29,7 +29,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FieldValues) => {
     setLoading(true);
-    const loginResult = await api.login(data.username, data.password);
+    const loginResult = await api.localLogin(data.username, data.password);
     if (!loginResult) {
       setLoading(false);
       return;
