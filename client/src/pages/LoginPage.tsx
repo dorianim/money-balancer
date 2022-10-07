@@ -1,22 +1,21 @@
-import { Button, Grid, TextField } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
+import { Button, Divider, Grid, Skeleton } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { Context } from '../data/Context';
 import { useNavigate } from 'react-router-dom';
 import CollapsableAlert from '../components/CollapsableAlert';
-import { FieldValues, useForm } from 'react-hook-form';
+import { FieldValues } from 'react-hook-form';
+import { AvailableAuthenticationProviders } from '../data/Types';
+import LoginForm from '../components/LoginForm';
 
 export default function LoginPage() {
   const { setTitle, setGoBackToUrl, loginRedirectUrl, setUser, api } =
     useContext(Context);
   const navigate = useNavigate();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
 
   const [loading, setLoading] = useState(false);
+  const [availableProviders, setAvailableProviders] =
+    useState<AvailableAuthenticationProviders>();
+
   useEffect(() => {
     if (api.loggedIn()) {
       navigate('/');
@@ -25,11 +24,25 @@ export default function LoginPage() {
 
     setTitle('Login');
     setGoBackToUrl(undefined);
+    loadAvailableProviders();
   }, []);
 
-  const onSubmit = async (data: FieldValues) => {
+  const loadAvailableProviders = async () => {
+    const availableProviders = await api.getAvailableAuthenticationProviders();
+    setAvailableProviders(availableProviders);
+
+    console.log(availableProviders);
+    if (
+      !availableProviders?.local.enabled &&
+      availableProviders?.proxy.enabled
+    ) {
+      loginUsingProxy();
+    }
+  };
+
+  const loginUsingLocal = async (data: FieldValues) => {
     setLoading(true);
-    const loginResult = await api.login(data.username, data.password);
+    const loginResult = await api.localLogin(data.username, data.password);
     if (!loginResult) {
       setLoading(false);
       return;
@@ -48,57 +61,70 @@ export default function LoginPage() {
     navigate(loginRedirectUrl, { replace: true });
   };
 
+  const loginUsingProxy = () => {
+    window.location.replace(`${window.location.href}/proxy`);
+  };
+
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <CollapsableAlert></CollapsableAlert>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              label='Username'
-              disabled={loading}
-              error={errors.username !== undefined}
-              {...register('username', { required: true })}
-              fullWidth
-            ></TextField>
-          </Grid>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <CollapsableAlert></CollapsableAlert>
+        </Grid>
 
+        {availableProviders?.local.enabled && (
           <Grid item xs={12}>
-            <TextField
-              type={'password'}
-              label='Password'
-              disabled={loading}
-              error={errors.password !== undefined}
-              {...register('password', { required: true })}
-              fullWidth
-            ></TextField>
+            <LoginForm onSubmit={loginUsingLocal} loading={loading} />
           </Grid>
+        )}
 
-          <Grid item xs={12}>
-            <LoadingButton
-              loading={loading}
-              variant='contained'
-              type='submit'
-              fullWidth
-            >
-              Login
-            </LoadingButton>
-          </Grid>
+        {availableProviders?.local.enabled &&
+          availableProviders?.proxy.enabled && (
+            <Grid item xs={12}>
+              <Divider>Or</Divider>
+            </Grid>
+          )}
 
+        {availableProviders?.proxy.enabled && (
           <Grid item xs={12}>
             <Button
+              variant='contained'
               disabled={loading}
-              variant='outlined'
-              onClick={() => navigate('/registration')}
+              onClick={loginUsingProxy}
               fullWidth
             >
-              Register
+              Login using SSO
             </Button>
           </Grid>
-        </Grid>
-      </form>
+        )}
+
+        {!availableProviders && (
+          <Grid item xs={12}>
+            <Skeleton height={52.5}></Skeleton>
+            <Skeleton height={52.5}></Skeleton>
+            <Skeleton height={52.5}></Skeleton>
+          </Grid>
+        )}
+
+        {availableProviders?.local.enabled && (
+          <>
+            <Grid item xs={12}>
+              <Divider>Or</Divider>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Button
+                disabled={loading}
+                variant='outlined'
+                onClick={() => navigate('/registration')}
+                fullWidth
+              >
+                Register
+              </Button>
+            </Grid>
+          </>
+        )}
+      </Grid>
     </>
   );
 }

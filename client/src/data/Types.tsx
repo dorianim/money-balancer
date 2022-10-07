@@ -31,3 +31,12 @@ export interface Debt {
   amount: number;
   was_split_unequally: boolean;
 }
+
+export interface AvailableAuthenticationProviders {
+  local: {
+    enabled: boolean;
+  };
+  proxy: {
+    enabled: boolean;
+  };
+}

@@ -1,17 +1,7 @@
-import { ChevronRight, ExpandMore } from '@mui/icons-material';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Grid,
-  IconButton,
-  Typography,
-} from '@mui/material';
+import { Grid } from '@mui/material';
 import { useContext } from 'react';
 import { Context } from '../data/Context';
 import { Transaction, GroupMember } from '../data/Types';
-import { ExpandMoreButton } from './ExpandMoreButton';
 import TransactionCard from './TransactionCard';
 
 export default function TransactionHistory(params: {

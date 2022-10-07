@@ -1,9 +1,12 @@
+use crate::services::authentication::AuthenticationService;
+use crate::services::configuration::ConfigurationService;
 use crate::services::group::{Group, GroupService};
 use crate::services::user::{User, UserService};
 use ::serde::{Deserialize, Serialize};
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::*;
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct UserCreationRequest {
@@ -59,12 +62,15 @@ async fn get_current_user(
 
 #[post("/", data = "<user_creation_request>")]
 async fn create_user(
-    user_service: &State<UserService>,
+    user_service: &State<Arc<UserService>>,
+    configuration_service: &State<Arc<ConfigurationService>>,
     group_service: &State<GroupService>,
     user_creation_request: Json<UserCreationRequest>,
 ) -> Result<Json<FullUser>, Status> {
-    let user_service = user_service as &UserService;
-    let group_service = group_service as &GroupService;
+    if configuration_service.auth_local().is_none() {
+        return Err(Status::Forbidden);
+    }
+
     let res = user_service
         .create_user(
             user_creation_request.username.to_owned(),
@@ -81,20 +87,19 @@ async fn create_user(
 
 #[post("/token", data = "<user_authentication_request>")]
 async fn token(
-    user_service: &State<UserService>,
+    authentication_service: &State<Arc<AuthenticationService>>,
     user_authentication_request: Json<UserAuthenticationRequest>,
 ) -> Result<Json<TokenResponse>, Status> {
-    let user_service = user_service as &UserService;
-    let res = user_service
-        .create_user_token(
-            user_authentication_request.username.to_owned(),
-            user_authentication_request.password.to_owned(),
+    let res = authentication_service
+        .authenticate_local(
+            &user_authentication_request.username,
+            &user_authentication_request.password,
         )
         .await;
 
     match res {
-        Ok(token) => Ok(Json(TokenResponse { token })),
-        Err(()) => Err(Status::Unauthorized),
+        Some(token) => Ok(Json(TokenResponse { token })),
+        None => Err(Status::Unauthorized),
     }
 }
 

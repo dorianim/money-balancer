@@ -40,7 +40,7 @@ export default function RegistrationPage() {
       return;
     }
 
-    const loginResult = await api.login(data.username, data.password);
+    const loginResult = await api.localLogin(data.username, data.password);
     if (!loginResult) {
       setLoading(false);
       navigate('/login');
