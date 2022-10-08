@@ -26,6 +26,7 @@ struct DebtsTransactionCreationRequest {
 }
 
 #[derive(Deserialize)]
+#[serde(untagged)]
 enum TransactionCreationRequest {
     Debts(DebtsTransactionCreationRequest),
     Amount(AmountTransactionCreationRequest),
