@@ -248,6 +248,25 @@ paths:
               oneOf:
                 - $ref: "#/components/schemas/AmountTransactionCreationRequest"
                 - $ref: "#/components/schemas/DebtsTransactionCreationRequest"
+
+            examples:
+              amount:
+                summary: total amount
+                value: 
+                  amount: 20
+                  debtor_ids: ["3fa85f64-5717-4562-b3fc-2c963f66afa6"]
+                  description: "Bread"
+              
+              bets:
+                summary: individual debts
+                value: 
+                  debts: 
+                    - amount: 10
+                      debtor_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      was_split_unequally: false
+                      
+                  description: "Bread"
+
       responses:
         200:
           description: detailed information about the updated group
