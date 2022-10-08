@@ -13,10 +13,22 @@ struct GroupCreationRequest {
 }
 
 #[derive(Deserialize)]
-struct TransactionCreationRequest {
+struct AmountTransactionCreationRequest {
     debtor_ids: Vec<String>,
     amount: u32,
     description: String,
+}
+
+#[derive(Deserialize)]
+struct DebtsTransactionCreationRequest {
+    debts: Vec<Debt>,
+    description: String,
+}
+
+#[derive(Deserialize)]
+enum TransactionCreationRequest {
+    Debts(DebtsTransactionCreationRequest),
+    Amount(AmountTransactionCreationRequest),
 }
 
 #[get("/")]
@@ -105,16 +117,26 @@ async fn create_group_tansaction(
     group_service: &State<GroupService>,
     user: User,
 ) -> Result<Json<Transaction>, Status> {
-    match group_service
-        .create_transaction(
-            group_id,
-            user.id,
-            transaction_creation_request.debtor_ids.to_owned(),
-            transaction_creation_request.amount,
-            transaction_creation_request.description.to_owned(),
-        )
-        .await
-    {
+    let res = match transaction_creation_request.0 {
+        TransactionCreationRequest::Amount(r) => {
+            group_service
+                .create_transaction_from_amount(
+                    &group_id,
+                    user.id,
+                    r.debtor_ids,
+                    r.amount,
+                    r.description,
+                )
+                .await
+        }
+        TransactionCreationRequest::Debts(r) => {
+            group_service
+                .create_transaction_from_debts(&group_id, user.id, r.description, r.debts)
+                .await
+        }
+    };
+
+    match res {
         Ok(t) => Ok(Json(t)),
         Err(e) => match e {
             TransactionCreationError::GroupNotFound => Err(Status::NotFound),

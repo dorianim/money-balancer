@@ -21,7 +21,7 @@ pub struct Group {
     members: Vec<GroupMember>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Debt {
     pub debtor_id: String,
     pub amount: i32,
@@ -184,39 +184,46 @@ impl GroupService {
         Some(self._get_group_members(&group_id).await)
     }
 
-    pub async fn create_transaction(
+    pub async fn create_transaction_from_amount(
         &self,
-        group_id: String,
+        group_id: &str,
         creditor_id: String,
         debtor_ids: Vec<String>,
         amount: u32,
         description: String,
     ) -> Result<Transaction, TransactionCreationError> {
-        let members = self
-            ._get_group_members(&group_id)
-            .await
-            .into_iter()
-            .map(|m| m.id)
-            .collect::<Vec<String>>();
+        self._check_memberships_of_creditor_and_debtor(group_id, &creditor_id, &debtor_ids)
+            .await?;
 
-        println!("{:?}", members);
-
-        if members.len() == 0 || !members.contains(&creditor_id) {
-            return Err(TransactionCreationError::GroupNotFound);
-        }
-
-        let mut all_debtors_in_group = true;
-
-        for debtor in &debtor_ids {
-            all_debtors_in_group = all_debtors_in_group && members.contains(debtor);
-        }
-
-        if !all_debtors_in_group {
-            return Err(TransactionCreationError::DebtorNotInGroup);
-        }
+        let debts = self
+            ._calculate_debt_of_debtors(group_id, &debtor_ids, amount)
+            .await;
 
         Ok(self
-            ._create_transaction_with_debt(group_id, creditor_id, debtor_ids, amount, description)
+            ._create_transaction_with_debts(group_id, creditor_id, debts, description)
+            .await)
+    }
+
+    pub async fn create_transaction_from_debts(
+        &self,
+        group_id: &str,
+        creditor_id: String,
+        description: String,
+        debts: Vec<Debt>,
+    ) -> Result<Transaction, TransactionCreationError> {
+        self._check_memberships_of_creditor_and_debtor(
+            group_id,
+            &creditor_id,
+            &debts
+                .clone()
+                .into_iter()
+                .map(|debt| debt.debtor_id)
+                .collect::<Vec<String>>(),
+        )
+        .await?;
+
+        Ok(self
+            ._create_transaction_with_debts(group_id, creditor_id, debts, description)
             .await)
     }
 
@@ -390,31 +397,48 @@ impl GroupService {
         new_transaction_id
     }
 
-    async fn _create_transaction_with_debt(
+    async fn _check_memberships_of_creditor_and_debtor(
         &self,
-        group_id: String,
+        group_id: &str,
+        creditor_id: &String,
+        debtor_ids: &Vec<String>,
+    ) -> Result<(), TransactionCreationError> {
+        let members = self
+            ._get_group_members(&group_id)
+            .await
+            .into_iter()
+            .map(|m| m.id)
+            .collect::<Vec<String>>();
+
+        if !members.contains(creditor_id) {
+            return Err(TransactionCreationError::GroupNotFound);
+        }
+
+        let mut all_debtors_in_group = true;
+
+        for debtor in debtor_ids {
+            all_debtors_in_group = all_debtors_in_group && members.contains(debtor);
+        }
+
+        if !all_debtors_in_group {
+            return Err(TransactionCreationError::DebtorNotInGroup);
+        }
+
+        Ok(())
+    }
+
+    async fn _create_transaction_with_debts(
+        &self,
+        group_id: &str,
         creditor_id: String,
-        debtor_ids: Vec<String>,
-        amount: u32,
+        debts: Vec<Debt>,
         description: String,
     ) -> Transaction {
         let transaction_id = self
             ._create_transaction(&group_id, creditor_id, description)
             .await;
 
-        let debts = self
-            ._calculate_debt_of_debtors(&group_id, debtor_ids, amount)
-            .await
-            .into_iter()
-            .map(
-                |(debtor, amount, was_split_unequally)| model::debt::ActiveModel {
-                    transaction_id: ActiveValue::Set(transaction_id.to_owned()),
-                    debtor_id: ActiveValue::Set(debtor.to_owned()),
-                    amount: ActiveValue::Set(amount as i32),
-                    was_split_unequally: ActiveValue::Set(if was_split_unequally { 1 } else { 0 }),
-                },
-            )
-            .collect::<Vec<model::debt::ActiveModel>>();
+        let debts = self._debts_into_active_model(debts, &transaction_id).await;
 
         for debt in debts {
             model::debt::Entity::insert(debt)
@@ -426,12 +450,28 @@ impl GroupService {
         self._get_transaction_by_id(transaction_id).await.unwrap()
     }
 
+    async fn _debts_into_active_model(
+        &self,
+        debts: Vec<Debt>,
+        transaction_id: &str,
+    ) -> Vec<model::debt::ActiveModel> {
+        debts
+            .into_iter()
+            .map(|debt| model::debt::ActiveModel {
+                transaction_id: ActiveValue::Set(transaction_id.to_owned()),
+                debtor_id: ActiveValue::Set(debt.debtor_id),
+                amount: ActiveValue::Set(debt.amount as i32),
+                was_split_unequally: ActiveValue::Set(if debt.was_split_unequally { 1 } else { 0 }),
+            })
+            .collect::<Vec<model::debt::ActiveModel>>()
+    }
+
     async fn _calculate_debt_of_debtors(
         &self,
         group_id: &str,
-        debtor_ids: Vec<String>,
+        debtor_ids: &Vec<String>,
         amount: u32,
-    ) -> Vec<(String, u32, bool)> {
+    ) -> Vec<Debt> {
         let mut debtor_ids = debtor_ids.clone();
         debtor_ids.sort();
         let debtor_count: u32 = debtor_ids.len() as u32;
@@ -452,12 +492,20 @@ impl GroupService {
             .into_iter()
             .map(|debtor| {
                 if unequally_charged_debtors.contains(&debtor) {
-                    (debtor, amount_per_debtor + 1, true)
+                    Debt {
+                        debtor_id: debtor,
+                        was_split_unequally: true,
+                        amount: (amount_per_debtor + 1) as i32,
+                    }
                 } else {
-                    (debtor, amount_per_debtor, false)
+                    Debt {
+                        debtor_id: debtor,
+                        was_split_unequally: false,
+                        amount: amount_per_debtor as i32,
+                    }
                 }
             })
-            .collect::<Vec<(String, u32, bool)>>()
+            .collect::<Vec<Debt>>()
     }
 
     async fn _get_order_of_debtors_to_be_unequally_charged(
