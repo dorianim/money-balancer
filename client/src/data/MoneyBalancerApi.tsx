@@ -3,6 +3,7 @@ import {
   AvailableAuthenticationProviders,
   Debt,
   Group,
+  GroupMember,
   Transaction,
   User,
 } from './Types';
@@ -198,6 +199,19 @@ export class MoneyBalancerApi {
 
     const json = await r.json();
     return json;
+  }
+
+  async getGroupMembers(id: string): Promise<GroupMember[] | undefined> {
+    const r = await this._authorizedFetch(`/group/${id}/member`, {
+      method: 'GET',
+    });
+
+    if (!r || (await this._error(r, 200))) {
+      return undefined;
+    }
+
+    const members: GroupMember[] = await r.json();
+    return members;
   }
 
   async joinGroup(id: string): Promise<boolean> {
