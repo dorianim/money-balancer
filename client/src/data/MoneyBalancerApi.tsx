@@ -226,7 +226,7 @@ export class MoneyBalancerApi {
     return true;
   }
 
-  async createTransaction(
+  async createTransactionFromAmount(
     groupId: string,
     amount: number,
     description: string,
@@ -238,6 +238,27 @@ export class MoneyBalancerApi {
         amount: Math.trunc(amount),
         description: description,
         debtor_ids: debtorIds,
+      }),
+    });
+
+    if (!r || (await this._error(r, 200))) {
+      return undefined;
+    }
+
+    const json = await r.json();
+    return json;
+  }
+
+  async createTransactionFromDebts(
+    groupId: string,
+    description: string,
+    debts: Debt[],
+  ): Promise<Group | undefined> {
+    const r = await this._authorizedFetch(`/group/${groupId}/transaction`, {
+      method: 'POST',
+      body: JSON.stringify({
+        description: description,
+        debts: debts,
       }),
     });
 

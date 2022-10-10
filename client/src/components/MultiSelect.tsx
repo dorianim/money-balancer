@@ -15,10 +15,11 @@ import { useState } from 'react';
 export default function MultiSelect(props: {
   options: Record<string, string>;
   onChange: (ids: string[]) => void;
+  label: string;
   disabled?: boolean;
   error?: boolean;
 }) {
-  const { disabled, error, options, onChange } = props;
+  const { disabled, label, error, options, onChange } = props;
 
   const [selectedConsumers, setSelectedConsumers] = useState<string[]>([]);
   const onConsumersChange = (e: SelectChangeEvent<string[]>) => {
@@ -32,12 +33,10 @@ export default function MultiSelect(props: {
 
   return (
     <FormControl fullWidth>
-      <InputLabel id='consumers-checkbox-label'>Consumers</InputLabel>
+      <InputLabel id='consumers-checkbox-label'>{label}</InputLabel>
       <Select
         multiple
         labelId='consumers-checkbox-label'
-        id='consumers-checkbox'
-        name='consumers'
         value={selectedConsumers}
         onChange={e => onConsumersChange(e)}
         input={<OutlinedInput id='select-multiple-chip' label='Chip' />}
