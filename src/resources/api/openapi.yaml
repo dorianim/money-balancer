@@ -238,11 +238,35 @@ paths:
       security:
         - bearerAuth: []
       requestBody:
-        description: detailed information about the purchase
+        description: |
+          detailed information about the purchase in form of 
+          * a total amount and the ids of the debtors (indiviual debt will be calculated on the server)
+          * individual debts
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TransactionCreationRequest"
+              oneOf:
+                - $ref: "#/components/schemas/AmountTransactionCreationRequest"
+                - $ref: "#/components/schemas/DebtsTransactionCreationRequest"
+
+            examples:
+              amount:
+                summary: total amount
+                value: 
+                  amount: 20
+                  debtor_ids: ["3fa85f64-5717-4562-b3fc-2c963f66afa6"]
+                  description: "Bread"
+              
+              bets:
+                summary: individual debts
+                value: 
+                  debts: 
+                    - amount: 10
+                      debtor_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      was_split_unequally: false
+                      
+                  description: "Bread"
+
       responses:
         200:
           description: detailed information about the updated group
@@ -388,7 +412,7 @@ components:
           items:
             $ref: "#/components/schemas/Debt"
 
-    TransactionCreationRequest:
+    AmountTransactionCreationRequest:
       type: object
       properties:
         amount:
@@ -402,6 +426,18 @@ components:
             type: string
             format: uuid
           description: ids of the users who use the purchased good
+        description:
+          type: string
+          example: "Bread"
+
+    DebtsTransactionCreationRequest:
+      type: object
+      properties:
+        debts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Debt'
+          description: the debt of all involved users
         description:
           type: string
           example: "Bread"

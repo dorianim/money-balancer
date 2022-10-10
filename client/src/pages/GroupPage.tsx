@@ -7,7 +7,6 @@ import Debts from '../components/Debts';
 import TransactionHistory from '../components/TransactionHistory';
 import { Add, Share } from '@mui/icons-material';
 import TransactionHistorySkeleton from '../components/TransactionHistorySkeleton';
-import TransactionCreationDialog from '../components/TransactionCreationDialog';
 import GroupShareDialog from '../components/GroupShareDialog';
 
 export default function LoginPage() {
@@ -18,8 +17,6 @@ export default function LoginPage() {
   const { setTitle, setGoBackToUrl, user, setLoginRedirectUrl, api } =
     useContext(Context);
 
-  const [transactionCreationDialogOpen, setTransactionCreationDialogOpen] =
-    useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [groupMembers, setGroupMembers] =
     useState<Record<string, GroupMember>>();
@@ -89,6 +86,10 @@ export default function LoginPage() {
     setTransactions(r);
   };
 
+  const createTransaction = () => {
+    navigate(`/group/${groupId}/transaction`);
+  };
+
   if (!api.loggedIn()) {
     return <></>;
   }
@@ -134,11 +135,7 @@ export default function LoginPage() {
         {transactions && groupMembers ? (
           <>
             <Grid item xs={12}>
-              <Button
-                variant='outlined'
-                onClick={() => setTransactionCreationDialogOpen(true)}
-                fullWidth
-              >
+              <Button variant='outlined' onClick={createTransaction} fullWidth>
                 <Add sx={{ marginRight: 1 }}></Add>
                 New transaction
               </Button>
@@ -161,19 +158,6 @@ export default function LoginPage() {
           </>
         )}
       </Grid>
-
-      {groupId && groupMembers && (
-        <TransactionCreationDialog
-          open={transactionCreationDialogOpen}
-          onClose={() => setTransactionCreationDialogOpen(false)}
-          onSuccess={() => {
-            setTransactionCreationDialogOpen(false);
-            loadGroupData();
-          }}
-          groupId={groupId}
-          groupMembersById={groupMembers}
-        />
-      )}
 
       <GroupShareDialog
         open={shareDialogOpen}
