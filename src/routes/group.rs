@@ -17,6 +17,7 @@ struct TransactionCreationRequest {
     debtor_ids: Vec<String>,
     amount: u32,
     description: String,
+    timestamp: Option<u32>,
 }
 
 #[get("/")]
@@ -112,6 +113,7 @@ async fn create_group_tansaction(
             transaction_creation_request.debtor_ids.to_owned(),
             transaction_creation_request.amount,
             transaction_creation_request.description.to_owned(),
+            transaction_creation_request.timestamp,
         )
         .await
     {

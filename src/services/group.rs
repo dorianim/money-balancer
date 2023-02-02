@@ -191,6 +191,7 @@ impl GroupService {
         debtor_ids: Vec<String>,
         amount: u32,
         description: String,
+        timestamp: Option<u32>,
     ) -> Result<Transaction, TransactionCreationError> {
         let members = self
             ._get_group_members(&group_id)
@@ -216,7 +217,14 @@ impl GroupService {
         }
 
         Ok(self
-            ._create_transaction_with_debt(group_id, creditor_id, debtor_ids, amount, description)
+            ._create_transaction_with_debt(
+                group_id,
+                creditor_id,
+                debtor_ids,
+                amount,
+                description,
+                timestamp,
+            )
             .await)
     }
 
@@ -364,21 +372,27 @@ impl GroupService {
         group_id: &str,
         creditor_id: String,
         description: String,
+        timestamp: Option<u32>,
     ) -> String {
         let new_transaction_id = uuid::Uuid::new_v4().to_string();
 
-        let new_transaction = model::transaction::ActiveModel {
-            id: ActiveValue::Set(new_transaction_id.to_owned()),
-            group_id: ActiveValue::Set(group_id.to_owned()),
-            creditor_id: ActiveValue::Set(creditor_id.to_owned()),
-            timestamp: ActiveValue::Set(
+        let timestamp: i32 = timestamp
+            .unwrap_or(
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
                     .as_secs()
                     .try_into()
                     .unwrap(),
-            ),
+            )
+            .try_into()
+            .unwrap();
+
+        let new_transaction = model::transaction::ActiveModel {
+            id: ActiveValue::Set(new_transaction_id.to_owned()),
+            group_id: ActiveValue::Set(group_id.to_owned()),
+            creditor_id: ActiveValue::Set(creditor_id.to_owned()),
+            timestamp: ActiveValue::Set(timestamp),
             description: ActiveValue::Set(description.to_owned()),
         };
 
@@ -397,9 +411,10 @@ impl GroupService {
         debtor_ids: Vec<String>,
         amount: u32,
         description: String,
+        timestamp: Option<u32>,
     ) -> Transaction {
         let transaction_id = self
-            ._create_transaction(&group_id, creditor_id, description)
+            ._create_transaction(&group_id, creditor_id, description, timestamp)
             .await;
 
         let debts = self

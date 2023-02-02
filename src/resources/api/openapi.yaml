@@ -8,9 +8,8 @@ servers:
   - url: /api/v1
 
 paths:
-
   /auth:
-    get: 
+    get:
       tags:
         - auth
       summary: get authentication config
@@ -26,7 +25,7 @@ paths:
                   local:
                     type: object
                     properties:
-                      enabled: 
+                      enabled:
                         type: boolean
                   proxy:
                     type: object
@@ -49,18 +48,17 @@ paths:
         required: true
       responses:
         200:
-          $ref: '#/components/responses/AuthenticationResponse'
+          $ref: "#/components/responses/AuthenticationResponse"
 
   /auth/proxy:
     post:
-      tags: 
+      tags:
         - auth
       summary: get a token from the proxy provider
       description: get a token by sending an empty request to the proxy provider
       responses:
         200:
-          $ref: '#/components/responses/AuthenticationResponse'
-
+          $ref: "#/components/responses/AuthenticationResponse"
 
   /user:
     get:
@@ -103,7 +101,7 @@ paths:
       deprecated: true
       tags:
         - user
-      summary: use `/auth/local` instead! 
+      summary: use `/auth/local` instead!
       description: just used for backwards compatibility
       requestBody:
         description: username and password
@@ -114,7 +112,7 @@ paths:
         required: true
       responses:
         200:
-          $ref: '#/components/responses/AuthenticationResponse'
+          $ref: "#/components/responses/AuthenticationResponse"
 
   /group:
     get:
@@ -405,6 +403,11 @@ components:
         description:
           type: string
           example: "Bread"
+        timestamp:
+          type: number
+          format: unix timestamp (seconds)
+          required: false
+          example: 1675350727
 
   responses:
     AuthenticationResponse:
