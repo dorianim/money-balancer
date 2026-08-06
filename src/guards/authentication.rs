@@ -19,7 +19,7 @@ impl<'r> FromRequest<'r> for services::user::User {
         let tokens: Vec<_> = request.headers().get("authorization").collect();
 
         if tokens.len() != 1 {
-            return Outcome::Failure((Status::Unauthorized, AuthenticationError::MissingToken));
+            return Outcome::Error((Status::Unauthorized, AuthenticationError::MissingToken));
         }
 
         let token = tokens.get(0).unwrap().to_string().replace("Bearer ", "");
@@ -28,13 +28,13 @@ impl<'r> FromRequest<'r> for services::user::User {
 
         if let Err(e) = claims {
             println!("   >> Error validating token: {}", e);
-            return Outcome::Failure((Status::Unauthorized, AuthenticationError::InvalidToken));
+            return Outcome::Error((Status::Unauthorized, AuthenticationError::InvalidToken));
         }
 
         let user = user_service.get_user_by_id(claims.unwrap().id).await;
 
         if user.is_none() {
-            return Outcome::Failure((Status::Unauthorized, AuthenticationError::InvalidToken));
+            return Outcome::Error((Status::Unauthorized, AuthenticationError::InvalidToken));
         }
 
         Outcome::Success(user.unwrap())
