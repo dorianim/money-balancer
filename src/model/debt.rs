@@ -9,7 +9,7 @@ pub struct Model {
     pub transaction_id: String,
     #[sea_orm(primary_key, auto_increment = false)]
     pub debtor_id: String,
-    pub amount: i32,
+    pub amount: i64,
     pub was_split_unequally: i32,
 }
 

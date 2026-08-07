@@ -7,6 +7,7 @@ mod m20220912_000002_create_group_table;
 mod m20220912_000003_create_group_member_table;
 mod m20220920_234028_create_transaction_table;
 mod m20220920_234539_create_debt_table;
+mod m20260807_000001_repair_negative_debt_amounts;
 
 pub struct Migrator;
 
@@ -19,6 +20,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20220912_000003_create_group_member_table::Migration),
             Box::new(m20220920_234028_create_transaction_table::Migration),
             Box::new(m20220920_234539_create_debt_table::Migration),
+            Box::new(m20260807_000001_repair_negative_debt_amounts::Migration),
         ]
     }
 }
