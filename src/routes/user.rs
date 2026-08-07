@@ -109,65 +109,68 @@ pub fn routes() -> Vec<rocket::Route> {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use crate::build_test_rocket;
     use crate::routes::user::{FullUser, TokenResponse};
-    use rocket::http::Status;
-    use rocket::local::blocking::Client;
-    use serial_test::serial;
+    use rocket::http::{ContentType, Status};
+    use rocket::local::asynchronous::Client;
 
-    pub fn create_user(client: &Client, username: &str) -> Result<FullUser, Status> {
+    pub async fn create_user(client: &Client, username: &str) -> Result<FullUser, Status> {
         let user_creation_request = super::UserCreationRequest {
             username: username.to_owned(),
             nickname: username.to_uppercase(),
             password: username.to_owned(),
         };
-        let request = client
-            .post("/user")
+        let response = client
+            .post("/api/v1/user/")
+            .header(ContentType::JSON)
             .body(rocket::serde::json::to_string(&user_creation_request).expect(""));
-        let response = request.clone().dispatch();
+        let response = response.dispatch().await;
 
         if response.status() != Status::Ok {
             return Err(response.status());
         }
 
-        let resp: FullUser =
-            rocket::serde::json::from_str(response.into_string().unwrap().as_str()).unwrap();
+        let response_body = response.into_string().await.unwrap();
+        let resp: FullUser = rocket::serde::json::from_str(response_body.as_str()).unwrap();
         Ok(resp)
     }
 
-    pub fn create_token(client: &Client, username: &str, password: &str) -> Result<String, Status> {
-        env::set_var("JWT_SECRET", "secret");
+    pub async fn create_token(
+        client: &Client,
+        username: &str,
+        password: &str,
+    ) -> Result<String, Status> {
         let user_authentication_request = super::UserAuthenticationRequest {
             username: username.to_owned(),
             password: password.to_owned(),
         };
-        let request = client
-            .post("/user/token")
+        let response = client
+            .post("/api/v1/user/token")
+            .header(ContentType::JSON)
             .body(rocket::serde::json::to_string(&user_authentication_request).expect(""));
-        let response = request.clone().dispatch();
+        let response = response.dispatch().await;
 
         if response.status() != Status::Ok {
             return Err(response.status());
         }
 
-        let resp: TokenResponse =
-            rocket::serde::json::from_str(response.into_string().unwrap().as_str()).unwrap();
+        let response_body = response.into_string().await.unwrap();
+        let resp: TokenResponse = rocket::serde::json::from_str(response_body.as_str()).unwrap();
 
         Ok(resp.token)
     }
 
-    #[test]
-    #[serial]
-    fn test_create_user() {
-        let client = Client::tracked(build_test_rocket()).expect("valid rocket instance");
-        let response = create_user(&client, "alice").expect("");
+    #[rocket::async_test]
+    async fn test_create_user() {
+        let client = Client::tracked(build_test_rocket().await)
+            .await
+            .expect("valid rocket instance");
+        let response = create_user(&client, "alice").await.expect("");
         assert_eq!(response.nickname, "ALICE");
         assert_eq!(response.username, "alice");
         assert_eq!(response.groups.len(), 0);
 
-        let response = create_user(&client, "alice");
+        let response = create_user(&client, "alice").await;
         assert!(if let Err(e) = response {
             e == Status::Conflict
         } else {
@@ -175,19 +178,22 @@ mod tests {
         });
     }
 
-    #[test]
-    #[serial]
-    fn test_create_token() {
-        let client = Client::tracked(build_test_rocket()).expect("valid rocket instance");
+    #[rocket::async_test]
+    async fn test_create_token() {
+        let client = Client::tracked(build_test_rocket().await)
+            .await
+            .expect("valid rocket instance");
 
-        let user = create_user(&client, "alice").expect("user to be created");
-        let response = create_token(&client, &user.username, &user.username);
-        assert!(!response.is_err());
+        let user = create_user(&client, "alice")
+            .await
+            .expect("user to be created");
+        let response = create_token(&client, &user.username, &user.username).await;
+        assert!(response.is_ok());
 
-        let response = create_token(&client, "alice", "wrong-password");
+        let response = create_token(&client, "alice", "wrong-password").await;
         assert!(response.is_err());
 
-        let response = create_token(&client, "does-not-exist", "");
+        let response = create_token(&client, "does-not-exist", "").await;
         assert!(response.is_err());
     }
 }

@@ -68,17 +68,21 @@ async fn rocket() -> _ {
     build_rocket(db)
 }
 
-pub fn build_test_rocket() -> Rocket<Build> {
-    std::fs::remove_file("./.money-balancer-test-tmp.sqlite").expect("");
+#[cfg(test)]
+pub async fn build_test_rocket() -> Rocket<Build> {
+    static SET_TEST_SECRET: std::sync::Once = std::sync::Once::new();
+    SET_TEST_SECRET.call_once(|| {
+        std::env::set_var("MONEYBALANCER_JWT_SECRET", "test-secret");
+    });
 
-    let db = match futures::executor::block_on(set_up_db(
-        "sqlite:./.money-balancer-test-tmp.sqlite?mode=rwc",
-    )) {
-        Ok(db) => db,
-        Err(e) => panic!("{}", e),
-    };
+    let mut options = ConnectOptions::new("sqlite::memory:".to_owned());
+    options.max_connections(1);
+    let db = Database::connect(options)
+        .await
+        .expect("Error creating test database!");
 
-    futures::executor::block_on(migration::Migrator::fresh(&db))
+    migration::Migrator::fresh(&db)
+        .await
         .expect("Error creating fresh test db!");
 
     build_rocket(db)
