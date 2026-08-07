@@ -286,6 +286,10 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Debt"
+        404:
+          description: the authenticated user is not a member of the group
+        422:
+          description: proving an exact minimum exceeded the debt optimizer's bounded resource budget
 
 components:
   schemas:
@@ -360,8 +364,9 @@ components:
           type: string
           format: uuid
         amount:
-          type: number
-          format: unsigned
+          type: integer
+          format: int64
+          description: Amount in cents; group balance responses use negative values when the current user owes the counterparty.
         was_split_unequally:
           type: boolean
 

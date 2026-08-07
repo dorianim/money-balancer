@@ -1,6 +1,10 @@
+pub use super::debt_optimization::DebtCalculationError;
+
+use super::debt_optimization::optimize_debt_transactions;
 use crate::model::{self};
 use ::serde::{Deserialize, Serialize};
 use futures::future;
+use rocket::tokio::sync::Semaphore;
 use sea_orm::*;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{collections::HashMap, sync::Arc};
@@ -24,7 +28,7 @@ pub struct Group {
 #[derive(Serialize)]
 pub struct Debt {
     pub debtor_id: String,
-    pub amount: i32,
+    pub amount: i64,
     pub was_split_unequally: bool,
 }
 
@@ -46,6 +50,7 @@ pub enum TransactionCreationError {
 #[derive(Debug)]
 pub struct GroupService {
     db: Arc<DatabaseConnection>,
+    debt_optimization_permits: Arc<Semaphore>,
 }
 
 #[derive(FromQueryResult)]
@@ -55,16 +60,13 @@ struct CountOfUnequallyChargedDebts {
 }
 
 #[derive(FromQueryResult)]
-struct DebtWithUserInGroup {
+struct GroupDebt {
+    debtor_id: String,
     creditor_id: String,
-    debt: i32,
+    amount: i64,
 }
 
-#[derive(FromQueryResult)]
-struct CreditWithUserInGroup {
-    debtor_id: String,
-    credit: i32,
-}
+const MAX_CONCURRENT_DEBT_OPTIMIZATIONS: usize = 2;
 
 impl Clone for Debt {
     fn clone(&self) -> Self {
@@ -91,7 +93,10 @@ impl Clone for Transaction {
 
 impl GroupService {
     pub fn new(db: Arc<DatabaseConnection>) -> GroupService {
-        GroupService { db: db }
+        GroupService {
+            db,
+            debt_optimization_permits: Arc::new(Semaphore::new(MAX_CONCURRENT_DEBT_OPTIMIZATIONS)),
+        }
     }
 
     pub async fn create_group(&self, name: String, owner: User) -> Group {
@@ -200,8 +205,6 @@ impl GroupService {
             .map(|m| m.id)
             .collect::<Vec<String>>();
 
-        println!("{:?}", members);
-
         if members.len() == 0 || !members.contains(&creditor_id) {
             return Err(TransactionCreationError::GroupNotFound);
         }
@@ -250,55 +253,52 @@ impl GroupService {
         &self,
         group_id: &str,
         user_id: &str,
-    ) -> Option<Vec<Debt>> {
+    ) -> Result<Option<Vec<Debt>>, DebtCalculationError> {
         if !self._is_user_member_of_group(group_id, user_id).await {
-            return None;
+            return Ok(None);
         }
 
-        let debts_of_user = model::debt::Entity::find()
-            .find_also_related(model::transaction::Entity)
+        let debts = model::debt::Entity::find()
+            .inner_join(model::transaction::Entity)
+            .select_only()
+            .column(model::debt::Column::DebtorId)
+            .column(model::transaction::Column::CreditorId)
+            .column_as(model::debt::Column::Amount.sum(), "amount")
             .filter(model::transaction::Column::GroupId.eq(group_id))
-            .filter(model::debt::Column::DebtorId.eq(user_id))
-            .group_by(model::transaction::Column::CreditorId)
-            .column_as(model::debt::Column::Amount.sum(), "B_debt")
-            .into_model::<model::debt::Model, DebtWithUserInGroup>()
-            .all(self.db.as_ref())
-            .await
-            .expect("error querying debt of user in group")
-            .into_iter()
-            .map(|(_, debt)| {
-                let debt = debt.unwrap();
-                (debt.creditor_id, debt.debt)
-            })
-            .collect::<HashMap<String, i32>>();
-
-        let credits_of_user = model::debt::Entity::find()
-            .find_also_related(model::transaction::Entity)
-            .filter(model::transaction::Column::GroupId.eq(group_id))
-            .filter(model::transaction::Column::CreditorId.eq(user_id))
             .group_by(model::debt::Column::DebtorId)
-            .column_as(model::debt::Column::Amount.sum(), "A_credit")
-            .into_model::<CreditWithUserInGroup, model::transaction::Model>()
+            .group_by(model::transaction::Column::CreditorId)
+            .into_model::<GroupDebt>()
             .all(self.db.as_ref())
             .await
-            .expect("error querying credit of user in group")
+            .expect("error querying debts in group")
             .into_iter()
-            .map(|(credit, _)| (credit.debtor_id, credit.credit))
-            .collect::<HashMap<String, i32>>();
-
-        Some(
-            self._get_group_members(&group_id)
+            .map(|debt| (debt.debtor_id, debt.creditor_id, debt.amount))
+            .collect::<Vec<(String, String, i64)>>();
+        let optimization_permit = self
+            .debt_optimization_permits
+            .clone()
+            .acquire_owned()
+            .await
+            .expect("debt optimization semaphore must remain open");
+        let resolved_debts =
+            rocket::tokio::task::spawn_blocking(move || optimize_debt_transactions(debts))
                 .await
+                .expect("debt settlement task failed")?;
+        drop(optimization_permit);
+        let mut members = self._get_group_members(group_id).await;
+        members.sort_by(|a, b| a.id.cmp(&b.id));
+
+        Ok(Some(
+            members
                 .into_iter()
                 .filter(|member| member.id != user_id)
                 .map(|member| Debt {
                     debtor_id: member.id.to_owned(),
-                    amount: credits_of_user.get(&member.id).unwrap_or(&0)
-                        - debts_of_user.get(&member.id).unwrap_or(&0),
+                    amount: resolved_debts.signed_amount_for(user_id, &member.id),
                     was_split_unequally: false,
                 })
                 .collect::<Vec<Debt>>(),
-        )
+        ))
     }
 
     pub async fn delete_transaction(
@@ -425,7 +425,7 @@ impl GroupService {
                 |(debtor, amount, was_split_unequally)| model::debt::ActiveModel {
                     transaction_id: ActiveValue::Set(transaction_id.to_owned()),
                     debtor_id: ActiveValue::Set(debtor.to_owned()),
-                    amount: ActiveValue::Set(amount as i32),
+                    amount: ActiveValue::Set(i64::from(amount)),
                     was_split_unequally: ActiveValue::Set(if was_split_unequally { 1 } else { 0 }),
                 },
             )
@@ -569,5 +569,176 @@ impl GroupService {
             Some(_) => true,
             None => false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use migration::MigratorTrait;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn get_debts_of_user_in_group_minimizes_transactions() {
+        rocket::tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("test runtime to be created")
+            .block_on(async {
+                let mut options = ConnectOptions::new("sqlite::memory:".to_owned());
+                options.max_connections(1);
+                let db = Arc::new(
+                    Database::connect(options)
+                        .await
+                        .expect("test database to be created"),
+                );
+                migration::Migrator::fresh(db.as_ref())
+                    .await
+                    .expect("test database to be migrated");
+
+                let users = ["a", "b", "c"];
+                for user_id in users {
+                    model::user::Entity::insert(model::user::ActiveModel {
+                        id: ActiveValue::Set(user_id.to_owned()),
+                        username: ActiveValue::Set(user_id.to_owned()),
+                        nickname: ActiveValue::Set(user_id.to_uppercase()),
+                        password: ActiveValue::Set("unused".to_owned()),
+                    })
+                    .exec(db.as_ref())
+                    .await
+                    .expect("test user to be inserted");
+                }
+
+                let service = GroupService::new(db);
+                let group = service
+                    .create_group(
+                        "settlement test".to_owned(),
+                        User {
+                            id: "a".to_owned(),
+                            username: "a".to_owned(),
+                            nickname: "A".to_owned(),
+                        },
+                    )
+                    .await;
+                assert!(
+                    service
+                        .create_group_member(group.id.clone(), "b".to_owned(), false)
+                        .await
+                );
+                assert!(
+                    service
+                        .create_group_member(group.id.clone(), "c".to_owned(), false)
+                        .await
+                );
+
+                for (debtor_id, creditor_id, amount) in
+                    [("a", "b", 1_000), ("a", "c", 1_000), ("b", "c", 1_000)]
+                {
+                    service
+                        .create_transaction(
+                            group.id.clone(),
+                            creditor_id.to_owned(),
+                            vec![debtor_id.to_owned()],
+                            amount,
+                            "settlement edge".to_owned(),
+                            None,
+                        )
+                        .await
+                        .ok()
+                        .expect("test transaction to be created");
+                }
+
+                let large_group = service
+                    .create_group(
+                        "large amount test".to_owned(),
+                        User {
+                            id: "a".to_owned(),
+                            username: "a".to_owned(),
+                            nickname: "A".to_owned(),
+                        },
+                    )
+                    .await;
+                assert!(
+                    service
+                        .create_group_member(large_group.id.clone(), "b".to_owned(), false)
+                        .await
+                );
+                let large_amount = i32::MAX as u32 + 1;
+                service
+                    .create_transaction(
+                        large_group.id.clone(),
+                        "b".to_owned(),
+                        vec!["a".to_owned()],
+                        large_amount,
+                        "large debt".to_owned(),
+                        None,
+                    )
+                    .await
+                    .ok()
+                    .expect("large test transaction to be created");
+
+                let debts_for_a = service
+                    .get_debts_of_user_in_group(&group.id, "a")
+                    .await
+                    .expect("debt calculation to succeed")
+                    .expect("group member to receive debts");
+                assert_eq!(
+                    debts_for_a
+                        .iter()
+                        .map(|debt| debt.debtor_id.as_str())
+                        .collect::<Vec<&str>>(),
+                    vec!["b", "c"]
+                );
+                assert!(debts_for_a.iter().all(|debt| !debt.was_split_unequally));
+                let debts_for_a = debts_for_a
+                    .into_iter()
+                    .map(|debt| (debt.debtor_id, debt.amount))
+                    .collect::<BTreeMap<String, i64>>();
+                let debts_for_b = service
+                    .get_debts_of_user_in_group(&group.id, "b")
+                    .await
+                    .expect("debt calculation to succeed")
+                    .expect("group member to receive debts")
+                    .into_iter()
+                    .map(|debt| (debt.debtor_id, debt.amount))
+                    .collect::<BTreeMap<String, i64>>();
+                let debts_for_c = service
+                    .get_debts_of_user_in_group(&group.id, "c")
+                    .await
+                    .expect("debt calculation to succeed")
+                    .expect("group member to receive debts")
+                    .into_iter()
+                    .map(|debt| (debt.debtor_id, debt.amount))
+                    .collect::<BTreeMap<String, i64>>();
+
+                assert_eq!(
+                    debts_for_a,
+                    BTreeMap::from([("b".to_owned(), 0), ("c".to_owned(), -2_000)])
+                );
+                assert_eq!(
+                    debts_for_b,
+                    BTreeMap::from([("a".to_owned(), 0), ("c".to_owned(), 0)])
+                );
+                assert_eq!(
+                    debts_for_c,
+                    BTreeMap::from([("a".to_owned(), 2_000), ("b".to_owned(), 0)])
+                );
+                assert_eq!(
+                    service
+                        .get_debts_of_user_in_group(&large_group.id, "a")
+                        .await
+                        .expect("debt calculation to succeed")
+                        .expect("group member to receive large debt")
+                        .into_iter()
+                        .map(|debt| (debt.debtor_id, debt.amount))
+                        .collect::<BTreeMap<String, i64>>(),
+                    BTreeMap::from([("b".to_owned(), -i64::from(large_amount))])
+                );
+                assert!(service
+                    .get_debts_of_user_in_group(&group.id, "not-a-member")
+                    .await
+                    .expect("debt calculation to succeed")
+                    .is_none());
+            });
     }
 }

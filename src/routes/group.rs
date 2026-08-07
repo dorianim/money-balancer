@@ -1,5 +1,6 @@
 use crate::services::group::{
-    Debt, Group, GroupMember, GroupService, Transaction, TransactionCreationError,
+    Debt, DebtCalculationError, Group, GroupMember, GroupService, Transaction,
+    TransactionCreationError,
 };
 use crate::services::user::User;
 use rocket::http::Status;
@@ -151,8 +152,11 @@ async fn get_group_debts(
         .get_debts_of_user_in_group(&group_id, &user.id)
         .await
     {
-        Some(d) => Ok(Json(d)),
-        None => Err(Status::NotFound),
+        Ok(Some(d)) => Ok(Json(d)),
+        Ok(None) => Err(Status::NotFound),
+        Err(DebtCalculationError::OptimizationResourceLimitExceeded) => {
+            Err(Status::UnprocessableEntity)
+        }
     }
 }
 
