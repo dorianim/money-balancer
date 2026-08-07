@@ -4,3 +4,4 @@
 **/.eslintrc.js
 **/build
 **/service-worker.ts
+**/*.d.ts

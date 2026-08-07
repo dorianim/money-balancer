@@ -2,3 +2,4 @@ money-balancer.sqlite
 target
 .env
 test.sh
+/node_modules/

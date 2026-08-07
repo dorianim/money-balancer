@@ -1,6 +1,6 @@
 import { Button, CircularProgress, Modal, Typography } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import CollapsableAlert from '../components/CollapsableAlert';
 import { Context } from '../data/Context';
 

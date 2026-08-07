@@ -9,7 +9,7 @@ import {
   Collapse,
 } from '@mui/material';
 import { useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 import { Context } from '../data/Context';
 import HeaderMenu from './HeaderMenu';

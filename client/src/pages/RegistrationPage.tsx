@@ -2,7 +2,7 @@ import { Grid, TextField } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { useContext, useEffect, useState } from 'react';
 import { Context } from '../data/Context';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import CollapsableAlert from '../components/CollapsableAlert';
 import { FieldValues, useForm } from 'react-hook-form';
 

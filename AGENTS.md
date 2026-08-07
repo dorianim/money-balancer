@@ -8,19 +8,19 @@ The Rust 2021/Rocket backend lives in `src/`. `main.rs` assembles the applicatio
 
 - `MONEYBALANCER_JWT_SECRET=dev-only cargo run` starts the API on port 8000 using the local SQLite database.
 - `cargo build` creates a debug backend binary. `cargo build --release` also installs/builds the client and embeds it in the release binary.
-- `cd client && yarn install && yarn start` runs the client development server; it calls the API at `http://localhost:8000/api/v1`.
-- `cd client && yarn build` creates the production client bundle.
+- `cd client && npm ci && npm start` runs the client development server; it calls the API at `http://localhost:8000/api/v1`.
+- `cd client && npm run build` creates the production client bundle.
 - `cd migration && cargo run -- status` inspects migrations; replace `status` with `up` to apply them.
 
 ## Coding Style & Naming Conventions
 
 Use standard `rustfmt`: four-space indentation, `snake_case` functions/modules, `PascalCase` types, and `SCREAMING_SNAKE_CASE` constants. Check Rust with `cargo fmt --all -- --check` and `cargo clippy --all-targets --all-features -- -D warnings`.
 
-Client code follows `client/.prettierrc`: two spaces, semicolons, single quotes, trailing commas, and an 80-column target. Use PascalCase component filenames such as `HeaderMenu.tsx` and camelCase functions. Run `cd client && yarn prettier --check src && yarn eslint src --ext .ts,.tsx`.
+Client code follows `client/.prettierrc`: two spaces, semicolons, single quotes, trailing commas, and an 80-column target. Use PascalCase component filenames such as `HeaderMenu.tsx` and camelCase functions. Run `cd client && npm run format:check && npm run lint`.
 
 ## Testing Guidelines
 
-Rust tests use the built-in harness, Rocket test clients, and `#[serial]` where environment or SQLite state is shared. Name them `test_*`. On a clean checkout, run `touch .money-balancer-test-tmp.sqlite && MONEYBALANCER_JWT_SECRET=test cargo test`. Frontend tests use Jest and React Testing Library; name files `*.test.tsx` and run `cd client && yarn test --watchAll=false`. No coverage threshold is configured, but add focused tests for changed behavior.
+Rust tests use the built-in harness, Rocket test clients, and `#[serial]` where environment or SQLite state is shared. Name them `test_*`. On a clean checkout, run `touch .money-balancer-test-tmp.sqlite && MONEYBALANCER_JWT_SECRET=test cargo test`. Frontend tests use Jest and React Testing Library; name files `*.test.tsx` and run `cd client && npm test -- --watchAll=false`. No coverage threshold is configured, but add focused tests for changed behavior.
 
 ## Commit & Pull Request Guidelines
 

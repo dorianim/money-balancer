@@ -1,6 +1,6 @@
 import { Button, Chip, Grid, Skeleton, Typography } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router';
 import { Context } from '../data/Context';
 import { Debt, GroupMember, Transaction } from '../data/Types';
 import Debts from '../components/Debts';

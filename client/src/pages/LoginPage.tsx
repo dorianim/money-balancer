@@ -1,7 +1,7 @@
 import { Button, Divider, Grid, Skeleton } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { Context } from '../data/Context';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import CollapsableAlert from '../components/CollapsableAlert';
 import { FieldValues } from 'react-hook-form';
 import { AvailableAuthenticationProviders } from '../data/Types';

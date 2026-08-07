@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import CollapsableAlert from '../components/CollapsableAlert';
 
 import { Context } from '../data/Context';

@@ -94,10 +94,12 @@ For example in [Authentik](https://goauthentik.io), you may use this as the unau
 
 # Development
 
-You need `cargo` and `yarn` installed on your system. You can build everything using
+You need Rust/Cargo and Node.js 22 with npm installed. Install client dependencies with
+`cd client && npm ci`. Build the release binary with the embedded client using
 
 ```
-cargo build
+cargo build --release
 ```
 
-This will create a static binary in `target/debug/money-balancer` which you can run.
+This creates a static binary at `target/release/money-balancer`. Debug builds skip
+the client build and only compile the API.

@@ -1,4 +1,4 @@
-import { Routes, Route, HashRouter } from 'react-router-dom';
+import { Routes, Route, HashRouter } from 'react-router';
 import Header from '../components/Header';
 import LoginPage from '../pages/LoginPage';
 import GroupListPage from '../pages/GroupListPage';
